@@ -106,25 +106,22 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+
+    maven {
+        name = "squiddev maven"
+        url 'https://squiddev.cc/maven/'
+    }
+
     maven {
         // Location of the maven that hosts JEI files (and TiC)
         name = "Progwml6 maven"
         url = "https://dvs1.progwml6.com/files/maven/"
     }
-//    maven {
-//        // Location of the maven for vazkii's mods
-//        name = "blamejared"
-//        url = "http://maven.blamejared.com/"
-//    }
     maven {
         //location of the maven for mixed mappings and registrate
         name = "tterrag maven"
         url = "https://maven.tterrag.com/"
     }
-//    maven {
-//        //location of the maven for dynamic trees
-//        url "http://harleyoconnor.com/maven"
-//    }
 }
 
 configurations {
@@ -140,6 +137,7 @@ dependencies {
 
     implementation fg.deobf("com.jozufozu.flywheel:Flywheel:${flywheel_version}")
     implementation fg.deobf("com.simibubi.create:Create:mc${minecraft_version}_v${create_version}")
+    implementation fg.deobf("org.squiddev:cc-tweaked-${cc_version}")
 
     // Compile against the JEI API but do not include it at runtime
     compileOnly fg.deobf("mezz.jei:jei-1.16.5:${jei_version}:api")
