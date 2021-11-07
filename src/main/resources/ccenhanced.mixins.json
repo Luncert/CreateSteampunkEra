@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "priority": 1000,
+  "package": "com.luncert.ccenhanced.foundation.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "ccenhanced.refmap.json",
+  "minVersion": "0.8"
+}
