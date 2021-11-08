@@ -30,8 +30,8 @@ ext.buildnumber = 0
 project.buildnumber = System.getenv('BUILD_NUMBER') != null ? System.getenv('BUILD_NUMBER') : "custom"
 
 version = "mc${minecraft_version}_v${mod_version}" + (dev && !buildnumber.equals("custom") ? "+${buildnumber}" : '')
-group = 'com.luncert.ccenhanced'
-archivesBaseName = 'ccenhanced'
+group = 'com.luncert.steampunkera'
+archivesBaseName = 'steampunkera'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8) // Mojang ships Java 8 to end users, so your mod should target Java 8.
 
@@ -42,7 +42,7 @@ minecraft {
     runs {
         client {
             workingDirectory project.file('run')
-            arg '-mixin.config=ccenhanced.mixins.json'
+            arg '-mixin.config=steampunkera.mixins.json'
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             property 'forge.logging.markers', 'REGISTRIES'
@@ -57,7 +57,7 @@ minecraft {
 
         server {
             workingDirectory project.file('run')
-            arg '-mixin.config=ccenhanced.mixins.json'
+            arg '-mixin.config=steampunkera.mixins.json'
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             property 'forge.logging.markers', 'REGISTRIES'
@@ -96,7 +96,7 @@ sourceSets.main.resources {
 }
 
 mixin {
-    add sourceSets.main, "ccenhanced.refmap.json"
+    add sourceSets.main, "steampunkera.refmap.json"
 }
 
 repositories {
@@ -151,7 +151,7 @@ jar {
     classifier = 'slim'
     manifest {
         attributes([
-            "Specification-Title": "CC:Enhanced",
+            "Specification-Title": "Create:SteampunkEra",
             "Specification-Vendor": "luncert",
             "Specification-Version": "1", // We are version 1 of ourselves
             "Implementation-Title": project.name,
@@ -166,7 +166,7 @@ jar {
 shadowJar {
     classifier = ''
     configurations = [project.configurations.shade]
-    relocate 'com.tterrag.registrate', 'com.luncert.ccenhanced.repack.registrate'
+    relocate 'com.tterrag.registrate', 'com.luncert.steampunkera.repack.registrate'
 }
 
 reobf {
