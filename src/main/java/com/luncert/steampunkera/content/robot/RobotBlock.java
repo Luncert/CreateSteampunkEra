@@ -1,51 +1,41 @@
 package com.luncert.steampunkera.content.robot;
 
-import com.luncert.steampunkera.index.AllTileEntities;
-import com.simibubi.create.foundation.block.ITE;
+import com.luncert.steampunkera.index.AllItems;
+import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.pathfinding.PathType;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
-public class RobotBlock extends Block implements ITE<RobotTileEntity> {
+@ParametersAreNonnullByDefault
+@MethodsReturnNonnullByDefault
+public class RobotBlock extends RobotBlockBase {
 
-    public RobotBlock(Properties p_i48440_1_) {
-        super(p_i48440_1_);
+    public RobotBlock(Properties props) {
+        super(props);
     }
 
     // public static BlockState createAnchor(BlockState state) {
     //     return AllBlocks.MINECART_ANCHOR.getDefaultState();
     // }
-
-    @Override
-    public Class<RobotTileEntity> getTileEntityClass() {
-        return RobotTileEntity.class;
-    }
-
-    @Override
-    public boolean hasTileEntity(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world) {
-        return AllTileEntities.ROBOT.create();
-    }
 
     @Override
     public void fallOn(World world, BlockPos pos, Entity entity, float speed) {
@@ -67,12 +57,19 @@ public class RobotBlock extends Block implements ITE<RobotTileEntity> {
         }
     }
 
+    @Nonnull
     @Override
-    public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand,
-                                BlockRayTraceResult p_225533_6_) {
+    public ActionResultType use(@Nonnull BlockState state,
+                                World world,
+                                @Nonnull BlockPos pos,
+                                PlayerEntity player,
+                                @Nonnull Hand hand,
+                                @Nonnull BlockRayTraceResult traceResult) {
         if (player.isShiftKeyDown()) {
             return ActionResultType.PASS;
         }
+
+        // return super.use(state, world, pos, player, hand, traceResult);
 
         // change robot color on use dye
         // ItemStack heldItem = player.getItemInHand(hand);

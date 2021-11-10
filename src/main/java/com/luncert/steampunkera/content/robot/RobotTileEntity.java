@@ -1,283 +1,67 @@
 package com.luncert.steampunkera.content.robot;
 
-import com.luncert.steampunkera.index.AllBlocks;
-import com.simibubi.create.AllSoundEvents;
-import com.simibubi.create.content.contraptions.components.structureMovement.*;
-import com.simibubi.create.foundation.gui.AllIcons;
-import com.simibubi.create.foundation.tileEntity.SmartTileEntity;
-import com.simibubi.create.foundation.tileEntity.TileEntityBehaviour;
-import com.simibubi.create.foundation.tileEntity.behaviour.scrollvalue.INamedIconOptions;
-import com.simibubi.create.foundation.utility.Lang;
-import com.simibubi.create.foundation.utility.ServerSpeedProvider;
-import net.minecraft.state.properties.BlockStateProperties;
-import net.minecraft.tileentity.ITickableTileEntity;
+import com.luncert.steampunkera.content.robot.cc.*;
+import dan200.computercraft.api.peripheral.IPeripheral;
+import dan200.computercraft.shared.common.TileGeneric;
+import dan200.computercraft.shared.computer.core.ComputerFamily;
+import dan200.computercraft.shared.computer.core.ComputerState;
+import dan200.computercraft.shared.computer.core.ServerComputer;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraft.util.Hand;
+import net.minecraftforge.common.util.LazyOptional;
 
-import java.util.List;
+import javax.annotation.Nonnull;
 
-@Mod.EventBusSubscriber
-public class RobotTileEntity extends SmartTileEntity implements ITickableTileEntity, IControlContraption {
+public class RobotTileEntity extends ComputerTileBase implements IComputerContainer {
 
-    public float speed = 1.0f;
+    private final RobotBrain brain;
+    private LazyOptional<IPeripheral> peripheral;
 
-    public boolean running;
-    public boolean assembleNextTick;
-    protected MovementMode movementMode;
-    protected boolean waitingForSpeedChange;
-    protected AssemblyException lastException;
-
-    private AbstractContraptionEntity movedContraption;
-
-    // Custom position sync
-    protected float clientOffsetDiff;
-
-    public RobotTileEntity(TileEntityType<?> tileEntityTypeIn) {
-        super(tileEntityTypeIn);
-        setLazyTickRate(3);
-        movementMode = MovementMode.MOVE_PLACE;
+    public RobotTileEntity(TileEntityType<? extends TileGeneric> type) {
+        super(type, ComputerFamily.NORMAL);
+        brain = new RobotBrain(this);
     }
 
     @Override
-    public void addBehaviours(List<TileEntityBehaviour> list) {
-        // 滚动选择运动模式
-    }
-
-    // @Override
-    public void _tick() {
-        super.tick();
-
-
-        if (movedContraption != null && !movedContraption.isAlive()) {
-            movedContraption = null;
-        }
-
-
-        if (level.isClientSide) {
-            clientOffsetDiff *= .75f;
-        }
-
-        if (waitingForSpeedChange && movedContraption != null) {
-            if (level.isClientSide) {
-                float syncSpeed = clientOffsetDiff / 2f;
-                movedContraption.setContraptionMotion(toMotionVector(syncSpeed));
-                return;
-            }
-            movedContraption.setContraptionMotion(Vector3d.ZERO);
-            return;
-        }
-
-        if (!level.isClientSide && assembleNextTick) {
-            assembleNextTick = false;
-            if (running) {
-                if (getSpeed() == 0)
-                    tryDisassemble();
-                else
-                    sendData();
-                return;
-            } else {
-                if (getSpeed() != 0)
-                    // try {
-                    //     assemble();
-                    //     lastException = null;
-                    // } catch (AssemblyException e) {
-                    //     lastException = e;
-                    // }
-                sendData();
-            }
-            return;
-        }
-
-        if (!running) {
-            return;
-        }
-
-        boolean contraptionPresent = movedContraption != null;
-        if (contraptionPresent) {
-            applyContraptionMotion();
-        }
-    }
-
-    @Override
-    public void lazyTick() {
-        super.lazyTick();
-        if (movedContraption != null && !level.isClientSide) {
-            sendData();
-        }
-    }
-
-    protected void tryDisassemble() {
-        // 根据运动模式决定是disassemble还是等待update
-        this.disassemble();
-    }
-
-    public void assemble(World world, BlockPos pos) throws AssemblyException {
-        // check block type
-        if (!(level.getBlockState(worldPosition).getBlock() instanceof RobotBlock))
-            return;
-
-        // Collect Construct
-        RobotContraption contraption = new RobotContraption();
-        try {
-            if (!contraption.assemble(world, pos))
-                return;
-
-            lastException = null;
-            sendData();
-        } catch (AssemblyException e) {
-            lastException = e;
-            sendData();
-            return;
-        }
-
-        Direction direction = getBlockState().getValue(BlockStateProperties.FACING);
-        if (ContraptionCollider.isCollidingWithWorld(level, contraption, contraption.anchor, direction)) {
-            return;
-        }
-
-        // run
-        running = true;
-        sendData();
-        clientOffsetDiff = 0;
-
-        OrientedContraptionEntity entity = OrientedContraptionEntity.create(world, contraption, direction);
-        entity.setPos(pos.getX(), pos.getY(), pos.getZ());
-        world.addFreshEntity(entity);
-        // entity.startRiding(robot);
-
-        AllSoundEvents.CONTRAPTION_ASSEMBLE.playOnServer(level, worldPosition);
-    }
-
-    public void disassemble() {
-        if (!running && movedContraption == null) {
-            return;
-        }
-
-        if (movedContraption != null) {
-            applyContraptionPosition();
-            movedContraption.disassemble();
-            AllSoundEvents.CONTRAPTION_DISASSEMBLE.playOnServer(level, worldPosition);
-        }
-        running = false;
-        movedContraption = null;
-        sendData();
-
-        if (remove) {
-            AllBlocks.ROBOT.get().playerWillDestroy(
-                    level, worldPosition, getBlockState(), null);
-        }
-    }
-
-    protected void applyContraptionPosition() {
-        if (movedContraption == null)
-            return;
-        // Vector3d vec = toPosition(offset);
-        // movedContraption.setPos(vec.x, vec.y, vec.z);
-        if (getSpeed() == 0 || waitingForSpeedChange) {
-            movedContraption.setContraptionMotion(Vector3d.ZERO);
-        }
-    }
-
-    private Vector3d toMotionVector(float speed) {
-        Direction direction = getBlockState().getValue(BlockStateProperties.FACING);
-        return Vector3d.atLowerCornerOf(direction.getNormal()).scale(speed);
-    }
-
-    @Override
-    public void onStall() {
+    protected void updateBlockState(ComputerState computerState) {
 
     }
 
     @Override
-    public boolean isValid() {
-        return false;
+    public Direction getDirection() {
+        // TODO
+        return Direction.NORTH;
     }
 
     @Override
-    public void collided() {
-        if (!running && getMovementSpeed() > 0) {
-            assembleNextTick = true;
-        }
-    }
-
-    public float getMovementSpeed() {
-        float movementSpeed = MathHelper.clamp(getSpeed(), -.49f, .49f) + clientOffsetDiff / 2f;
-        if (level.isClientSide) {
-            movementSpeed *= ServerSpeedProvider.get();
-        }
-        return movementSpeed;
-    }
-
-    public float getSpeed() {
-        return speed;
+    public INamedContainerProvider getContainerProvider(ServerComputer computer,
+                                                        PlayerEntity player,
+                                                        @Nonnull Hand hand,
+                                                        RobotControllerItem controller) {
+        return new RobotContainer.Factory(computer, player.getItemInHand(hand), controller, hand);
     }
 
     @Override
-    public void attach(ControlledContraptionEntity contraption) {
-        this.movedContraption = contraption;
-        if (!level.isClientSide) {
-            this.running = true;
-            sendData();
-        }
+    protected ServerComputer createComputer(int instanceID, int computerID) {
+        ServerComputer computer = new ServerComputer(this.getLevel(), computerID, this.label, instanceID, this.getFamily(), 39, 13);
+        computer.setPosition(this.getBlockPos());
+        computer.addAPI(new RobotAPI(computer.getAPIEnvironment(), this.getAccess()));
+        this.brain.setupComputer(computer);
+        return computer;
     }
 
-    @Override
-    public boolean isAttachedTo(AbstractContraptionEntity contraption) {
-        return movedContraption == contraption;
+    public IRobotAccess getAccess() {
+        return this.brain;
     }
 
-    @Override
-    public BlockPos getBlockPosition() {
-        return worldPosition;
+    public ComputerProxy createProxy() {
+        return this.brain.getProxy();
     }
 
-    protected void applyContraptionMotion() {
-        if (movedContraption == null) {
-            return;
-        }
-
-        // stop contraption
-        if (movedContraption.isStalled()) {
-            movedContraption.setContraptionMotion(Vector3d.ZERO);
-            return;
-        }
-
-        movedContraption.setContraptionMotion(getMotionVector());
-    }
-
-    public Vector3d getMotionVector() {
-        return toMotionVector(getMovementSpeed());
-    }
-
-    public enum RobotMovementMode implements INamedIconOptions {
-
-        ROTATE(AllIcons.I_CART_ROTATE),
-        ROTATE_PAUSED(AllIcons.I_CART_ROTATE_PAUSED),
-        ROTATION_LOCKED(AllIcons.I_CART_ROTATE_LOCKED),
-
-        ;
-
-        private String translationKey;
-        private AllIcons icon;
-
-        RobotMovementMode(AllIcons icon) {
-            this.icon = icon;
-            translationKey = "contraptions.cart_movement_mode." + Lang.asId(name());
-        }
-
-        @Override
-        public AllIcons getIcon() {
-            return icon;
-        }
-
-        @Override
-        public String getTranslationKey() {
-            return translationKey;
-        }
+    public boolean isUsableByPlayer(PlayerEntity player) {
+        return this.isUsable(player, false);
     }
 }

@@ -1,5 +1,6 @@
 package com.luncert.steampunkera.content.net;
 
+import com.luncert.steampunkera.SteampunkEra;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
@@ -14,7 +15,7 @@ public class CCEPacketHandler {
   }
 
   public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
-      new ResourceLocation("ccenhanced", "main"),
+      new ResourceLocation(SteampunkEra.MOD_ID, "main"),
       () -> PROTOCOL_VERSION,
       PROTOCOL_VERSION::equals,
       PROTOCOL_VERSION::equals

@@ -2,10 +2,7 @@ package com.luncert.steampunkera;
 
 import com.luncert.steampunkera.content.CCEItemGroup;
 import com.luncert.steampunkera.content.net.CCEPacketHandler;
-import com.luncert.steampunkera.index.AllBlocks;
-import com.luncert.steampunkera.index.AllEntityTypes;
-import com.luncert.steampunkera.index.AllItems;
-import com.luncert.steampunkera.index.AllTileEntities;
+import com.luncert.steampunkera.index.*;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.repack.registrate.util.NonNullLazyValue;
 import net.minecraft.block.Block;
@@ -49,6 +46,7 @@ public class SteampunkEra
         AllItems.register();
         AllEntityTypes.register();
         AllTileEntities.register();
+        AllContainerTypes.register();
         CCEPacketHandler.register();
 
         IEventBus buf = FMLJavaModLoadingContext.get().getModEventBus();

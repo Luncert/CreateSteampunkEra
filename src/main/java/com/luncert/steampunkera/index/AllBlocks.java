@@ -2,6 +2,7 @@ package com.luncert.steampunkera.index;
 
 import com.luncert.steampunkera.SteampunkEra;
 import com.luncert.steampunkera.content.robot.RobotBlock;
+import com.luncert.steampunkera.content.robot.RobotChargeStationBlock;
 import com.simibubi.create.AllTags;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.SharedProperties;
@@ -25,5 +26,14 @@ public class AllBlocks {
             .simpleItem()
             // .item()
             // .transform(customItemModel())
+            .register();
+
+    public static final BlockEntry<RobotChargeStationBlock> ROBOT_CHARGE_STATION =
+        REGISTRATE.block("robot_charge_station", RobotChargeStationBlock::new)
+            .initialProperties(SharedProperties::stone)
+            .properties(AbstractBlock.Properties::noOcclusion)
+            .properties(b -> b.strength(1200, 1200))
+            .tag(AllTags.AllBlockTags.SAFE_NBT.tag)
+            .simpleItem()
             .register();
 }

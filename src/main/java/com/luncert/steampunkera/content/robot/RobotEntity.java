@@ -3,8 +3,13 @@ package com.luncert.steampunkera.content.robot;
 import com.luncert.steampunkera.content.common.SimpleDirection;
 import com.luncert.steampunkera.content.net.CCEPacketHandler;
 import com.luncert.steampunkera.content.net.CRobotPacket;
+import com.luncert.steampunkera.content.robot.cc.ComputerEntityBase;
+import com.luncert.steampunkera.content.robot.cc.IRobotAccess;
+import com.luncert.steampunkera.content.robot.cc.RobotAPI;
 import com.luncert.steampunkera.index.AllBlocks;
 import com.luncert.steampunkera.index.AllEntityTypes;
+import dan200.computercraft.shared.computer.core.ComputerFamily;
+import dan200.computercraft.shared.computer.core.ServerComputer;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -13,6 +18,7 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.*;
 import net.minecraft.entity.passive.WaterMobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.DirectionalPlaceContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -37,6 +43,7 @@ import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import net.minecraftforge.fml.network.NetworkHooks;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
@@ -52,7 +59,7 @@ import static com.luncert.steampunkera.content.robot.RobotMovement.MOVEMENT_SERI
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class RobotEntity extends Entity implements IEntityAdditionalSpawnData {
+public class RobotEntity extends ComputerEntityBase implements IEntityAdditionalSpawnData {
 
     // private static final Logger LOGGER = LogManager.getLogger();
 
@@ -60,6 +67,8 @@ public class RobotEntity extends Entity implements IEntityAdditionalSpawnData {
     private static final DataParameter<Boolean> CLOCKWISE_ROTATION = EntityDataManager.defineId(RobotEntity.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Float> WAITING_Y_ROT = EntityDataManager.defineId(RobotEntity.class, DataSerializers.FLOAT);
     private static final DataParameter<Optional<RobotMovement>> WAITING_MOVEMENT = EntityDataManager.defineId(RobotEntity.class, MOVEMENT_SERIALIZER);
+
+    private final RobotBrain brain;
 
     private BlockState blockState = AllBlocks.ROBOT.get().defaultBlockState();
     private int time;
@@ -81,9 +90,10 @@ public class RobotEntity extends Entity implements IEntityAdditionalSpawnData {
 
     // for server
     public RobotEntity(EntityType<?> entity, World world) {
-        super(entity, world);
+        super(entity, world, ComputerFamily.NORMAL);
         this.blocksBuilding = true; // not allow building at entity's position
         this.setInvulnerable(true); // cannot be hurt
+        brain = new RobotBrain(this);
     }
 
     // for client
@@ -95,13 +105,55 @@ public class RobotEntity extends Entity implements IEntityAdditionalSpawnData {
         setDeltaMovement(Vector3d.ZERO);
     }
 
+    // computer
+
+    @Override
+    protected ServerComputer createComputer(int instanceID, int computerID) {
+        ServerComputer computer = new ServerComputer(this.level, computerID,
+            this.label, instanceID, this.getFamily(), 39, 13);
+        computer.setPosition(this.blockPosition());
+        computer.addAPI(new RobotAPI(computer.getAPIEnvironment(), this.getAccess()));
+        this.brain.setupComputer(computer);
+        return computer;
+    }
+
+    public IRobotAccess getAccess() {
+        return this.brain;
+    }
+
+    @Override
+    public boolean isRemoved() {
+        return removed;
+    }
+
+    @Override
+    public World getLevel() {
+        return level;
+    }
+
+    @Override
+    public BlockPos getBlockPos() {
+        return blockPosition();
+    }
+
+    @Override
+    public INamedContainerProvider getContainerProvider(ServerComputer computer,
+                                                        PlayerEntity player,
+                                                        @Nonnull Hand hand,
+                                                        RobotControllerItem controller) {
+        return new RobotContainer.Factory(computer, player.getItemInHand(hand), controller, hand);
+    }
+
+    // entity
+
     @OnlyIn(Dist.CLIENT)
-    public void lerpTo(double p_180426_1_, double p_180426_3_, double p_180426_5_, float p_180426_7_, float p_180426_8_, int p_180426_9_, boolean p_180426_10_) {
-        this.lerpX = p_180426_1_;
-        this.lerpY = p_180426_3_;
-        this.lerpZ = p_180426_5_;
-        this.lerpYRot = p_180426_7_;
-        this.lerpXRot = p_180426_8_;
+    public void lerpTo(double lerpX, double lerpY, double lerpZ, float lerpYRot, float lerpXRot,
+                       int p_180426_9_, boolean p_180426_10_) {
+        this.lerpX = lerpX;
+        this.lerpY = lerpY;
+        this.lerpZ = lerpZ;
+        this.lerpYRot = lerpYRot;
+        this.lerpXRot = lerpXRot;
         this.lerpSteps = 10;
     }
 
@@ -444,7 +496,6 @@ public class RobotEntity extends Entity implements IEntityAdditionalSpawnData {
         return getSpeed() / 512f;
     }
 
-    // TODO: 不起作用
     @Override
     public ActionResultType interact(PlayerEntity player, Hand hand) {
         if (player.isSecondaryUseActive()) {

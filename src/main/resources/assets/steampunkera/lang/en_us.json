@@ -1,2 +1,7 @@
 {
+  "itemGroup.steampunkera.base": "Steampunk Era",
+  "item.steampunkera.robot_controller": "Robot Controller",
+  "block.steampunkera.robot_charge_station": "Robot Charge Station",
+  "block.steampunkera.steam_pistol": "Steam Pistol",
+  "block.steampunkera.robot": "Robot"
 }

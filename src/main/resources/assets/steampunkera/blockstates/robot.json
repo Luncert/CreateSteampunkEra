@@ -1,5 +1,20 @@
 {
   "variants": {
-    "": { "model": "steampunkera:block/robot" }
+    "facing=north": {
+      "model": "steampunkera:block/robot",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "steampunkera:block/robot",
+      "y":90
+    },
+    "facing=south": {
+      "model": "steampunkera:block/robot",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "steampunkera:block/robot",
+      "y": 270
+    }
   }
 }

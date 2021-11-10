@@ -76,7 +76,7 @@ minecraft {
             property 'forge.logging.markers', 'REGISTRIES,REGISTRYDUMP'
             property 'forge.logging.console.level', 'debug'
             property 'fml.earlyprogresswindow', 'false'
-            args '--mod', 'ccenhanced', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources')
+            args '--mod', 'steampunkera', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources')
             mods {
                 ccehanced {
                     source sourceSets.main
@@ -158,7 +158,7 @@ jar {
             "Implementation-Version": "${version}",
             "Implementation-Vendor" :"luncert",
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-            "MixinConfigs": "ccenhanced.mixins.json"
+            "MixinConfigs": "steampunkera.mixins.json"
         ])
     }
 }
