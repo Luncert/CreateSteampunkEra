@@ -1,7 +1,7 @@
 package com.luncert.steampunkera.content;
 
 import com.luncert.steampunkera.foundation.CCEItemGroupBase;
-import com.luncert.steampunkera.index.AllBlocks;
+import com.luncert.steampunkera.index.ModBlocks;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.item.ItemStack;
 
@@ -14,6 +14,6 @@ public class CCEItemGroup extends CCEItemGroupBase {
     @Override
     @MethodsReturnNonnullByDefault
     public ItemStack makeIcon() {
-        return AllBlocks.ROBOT.asStack();
+        return ModBlocks.ROBOT.asStack();
     }
 }

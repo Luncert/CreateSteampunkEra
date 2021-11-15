@@ -1,7 +1,7 @@
 package com.luncert.steampunkera.content.net;
 
-import com.luncert.steampunkera.content.robot.RobotEntity;
-import com.luncert.steampunkera.content.robot.RobotMovement;
+import com.luncert.steampunkera.content.core.robot.RobotEntity;
+import com.luncert.steampunkera.content.core.robot.RobotMovement;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
@@ -11,7 +11,7 @@ import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import static com.luncert.steampunkera.content.robot.RobotMovement.MOVEMENT_SERIALIZER;
+import static com.luncert.steampunkera.content.core.robot.RobotMovement.MOVEMENT_SERIALIZER;
 
 // used to sync robot entity data from client side to server
 public class CRobotPacket {

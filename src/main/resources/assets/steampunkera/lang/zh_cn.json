@@ -2,6 +2,6 @@
   "itemGroup.steampunkera.base": "蒸汽时代",
   "item.steampunkera.robot_controller": "机器人控制器",
   "block.steampunkera.robot_charge_station": "机器人充能站",
-  "block.steampunkera.steam_pistol": "蒸汽手枪",
+  "block.steampunkera.pistol": "手枪",
   "block.steampunkera.robot": "机器人"
 }

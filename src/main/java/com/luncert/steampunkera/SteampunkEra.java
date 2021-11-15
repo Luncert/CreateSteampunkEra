@@ -26,27 +26,22 @@ import org.apache.logging.log4j.Logger;
 import java.util.stream.Collectors;
 
 // The value here should match an entry in the META-INF/mods.toml file
-@Mod(SteampunkEra.MOD_ID)
-public class SteampunkEra
-{
-
-    public static final String MOD_ID = "steampunkera";
-    public static final String NAME = "Create:SteampunkEra";
-    public static final String VERSION = "0.0.1a";
+@Mod(Reference.MOD_ID)
+public class SteampunkEra {
 
     // Directly reference a log4j logger.
     private static final Logger LOGGER = LogManager.getLogger();
 
     public static final ItemGroup MAIN = new CCEItemGroup();
 
-    private static final NonNullLazyValue<CreateRegistrate> REGISTRATE = CreateRegistrate.lazy(MOD_ID);
+    private static final NonNullLazyValue<CreateRegistrate> REGISTRATE = CreateRegistrate.lazy(Reference.MOD_ID);
 
     public SteampunkEra() {
-        AllBlocks.register();
-        AllItems.register();
-        AllEntityTypes.register();
-        AllTileEntities.register();
-        AllContainerTypes.register();
+        ModBlocks.register();
+        ModItems.register();
+        ModEntityTypes.register();
+        ModTileEntities.register();
+        ModContainerTypes.register();
         CCEPacketHandler.register();
 
         IEventBus buf = FMLJavaModLoadingContext.get().getModEventBus();
@@ -78,7 +73,7 @@ public class SteampunkEra
     private void doClientStuff(final FMLClientSetupEvent event) {
         // do something that can only be done on the client
         LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().options);
-        AllEntityTypes.registerRenderers();
+        ModEntityTypes.registerRenderers();
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event)

@@ -1,14 +1,9 @@
 buildscript {
     repositories {
-
-        maven { url = 'https://download.mcbbs.net/maven' }
-        maven { url = 'https://maven.aliyun.com/repository/central' }
-        maven { url = 'https://maven.aliyun.com/repository/jcenter' }
         maven { url = 'https://files.minecraftforge.net/maven' }
-        maven { url = 'https://maven.minecraftforge.net' }
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-        mavenCentral()
+        maven { url = 'https://repo.spongepowered.org/maven' }
         jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: "${forgegradle_version}", changing: true
@@ -117,6 +112,7 @@ repositories {
         name = "Progwml6 maven"
         url = "https://dvs1.progwml6.com/files/maven/"
     }
+
     maven {
         //location of the maven for mixed mappings and registrate
         name = "tterrag maven"
@@ -138,6 +134,8 @@ dependencies {
     implementation fg.deobf("com.jozufozu.flywheel:Flywheel:${flywheel_version}")
     implementation fg.deobf("com.simibubi.create:Create:mc${minecraft_version}_v${create_version}")
     implementation fg.deobf("org.squiddev:cc-tweaked-${cc_version}")
+    implementation fg.deobf('curse.maven:obfuscate-289380:3336021')
+    implementation fg.deobf('curse.maven:cgm-289479:3224957')
 
     // Compile against the JEI API but do not include it at runtime
     compileOnly fg.deobf("mezz.jei:jei-1.16.5:${jei_version}:api")
