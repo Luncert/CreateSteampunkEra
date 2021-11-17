@@ -3,5 +3,6 @@
   "item.steampunkera.robot_controller": "Robot Controller",
   "block.steampunkera.robot_charge_station": "Robot Charge Station",
   "block.steampunkera.pistol": "Pistol",
-  "block.steampunkera.robot": "Robot"
+  "block.steampunkera.robot": "Robot",
+  "steampunkera.gui.robot_charge_station.title": "Robot Charge Station"
 }

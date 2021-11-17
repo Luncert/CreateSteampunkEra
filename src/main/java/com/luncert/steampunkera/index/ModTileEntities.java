@@ -1,8 +1,8 @@
 package com.luncert.steampunkera.index;
 
 import com.luncert.steampunkera.SteampunkEra;
-import com.luncert.steampunkera.content.core.robot.RobotChargeStationTileEntity;
-import com.luncert.steampunkera.content.core.robot.RobotChargeStationTileEntityRenderer;
+import com.luncert.steampunkera.content.core.robotchargestation.RobotChargeStationTileEntity;
+import com.luncert.steampunkera.content.core.robotchargestation.RobotChargeStationTileEntityRenderer;
 import com.luncert.steampunkera.content.core.robot.RobotTileEntity;
 import com.simibubi.create.repack.registrate.util.entry.TileEntityEntry;
 
@@ -16,9 +16,9 @@ public class ModTileEntities {
             .validBlocks(ModBlocks.ROBOT)
             .register();
 
-    public static final TileEntityEntry<RobotChargeStationTileEntity> ROBOT_CONTAINER =
+    public static final TileEntityEntry<RobotChargeStationTileEntity> ROBOT_CHARGE_STATION =
         SteampunkEra.registrate()
-            .tileEntity("robot_container", RobotChargeStationTileEntity::new)
+            .tileEntity("robot_charge_station", RobotChargeStationTileEntity::new)
             .validBlocks(ModBlocks.ROBOT_CHARGE_STATION)
             .renderer(() -> RobotChargeStationTileEntityRenderer::new)
             .register();

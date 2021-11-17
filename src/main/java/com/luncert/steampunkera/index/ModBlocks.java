@@ -2,7 +2,7 @@ package com.luncert.steampunkera.index;
 
 import com.luncert.steampunkera.SteampunkEra;
 import com.luncert.steampunkera.content.core.robot.RobotBlock;
-import com.luncert.steampunkera.content.core.robot.RobotChargeStationBlock;
+import com.luncert.steampunkera.content.core.robotchargestation.RobotChargeStationBlock;
 import com.simibubi.create.AllTags;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.SharedProperties;

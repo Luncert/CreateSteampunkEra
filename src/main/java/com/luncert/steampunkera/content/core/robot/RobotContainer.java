@@ -16,6 +16,9 @@ import net.minecraft.util.text.ITextComponent;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+/**
+ * Used to display computer gui.
+ */
 public class RobotContainer extends ContainerComputerBase {
 
   // public RobotContainer(int id, RobotTileEntity tile) {

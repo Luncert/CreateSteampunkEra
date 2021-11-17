@@ -12,6 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
@@ -43,6 +44,7 @@ public class RobotControllerItem extends Item implements IComputerItem, IMedia {
 
     if (!world.isClientSide) {
       if (computerContainer == null) {
+        // TODO: add tips
         // player.displayClientMessage(
         //     ITextComponent.nullToEmpty("No robot connected to this controller"), true);
         return ActionResult.pass(stack);

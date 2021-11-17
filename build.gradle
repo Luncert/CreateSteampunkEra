@@ -1,8 +1,7 @@
 buildscript {
     repositories {
-        maven { url = 'https://files.minecraftforge.net/maven' }
+        maven { url = 'https://maven.minecraftforge.net' }
         maven { url = 'https://repo.spongepowered.org/maven' }
-        jcenter()
         mavenCentral()
     }
     dependencies {
@@ -127,13 +126,16 @@ configurations {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    def registrate = "com.tterrag.registrate:Registrate:MC1.16.5-${registrate_version}"
-    implementation fg.deobf(registrate)
-    shade registrate
+//    def registrate = "com.tterrag.registrate:Registrate:MC1.16.5-${registrate_version}"
+//    implementation fg.deobf(registrate)
+//    shade registrate
 
-    implementation fg.deobf("com.jozufozu.flywheel:Flywheel:${flywheel_version}")
-    implementation fg.deobf("com.simibubi.create:Create:mc${minecraft_version}_v${create_version}")
-    implementation fg.deobf("org.squiddev:cc-tweaked-${cc_version}")
+//    implementation fg.deobf("com.jozufozu.flywheel:Flywheel:${flywheel_version}")
+//    implementation fg.deobf("com.simibubi.create:Create:mc${minecraft_version}_v${create_version}")
+//    implementation fg.deobf("org.squiddev:cc-tweaked-${cc_version}")
+    implementation fg.deobf('curse.maven:flywheel-486392:3459739')
+    implementation fg.deobf('curse.maven:create-328085:3499718')
+    implementation fg.deobf('curse.maven:cc-tweaked-282001:3434680')
     implementation fg.deobf('curse.maven:obfuscate-289380:3336021')
     implementation fg.deobf('curse.maven:cgm-289479:3224957')
 
