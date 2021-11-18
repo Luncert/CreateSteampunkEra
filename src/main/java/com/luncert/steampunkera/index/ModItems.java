@@ -1,7 +1,7 @@
 package com.luncert.steampunkera.index;
 
 import com.luncert.steampunkera.SteampunkEra;
-import com.luncert.steampunkera.content.core.robot.RobotControllerItem;
+import com.luncert.steampunkera.content.core.robotcontroller.RobotConnectorItem;
 import com.mrcrayfish.guns.item.GunItem;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.repack.registrate.util.entry.ItemEntry;
@@ -13,8 +13,8 @@ public class ModItems {
 
     public static void register() {}
 
-    public static final ItemEntry<RobotControllerItem> ROBOT_CONTROLLER =
-        REGISTRATE.item("robot_controller", RobotControllerItem::new)
+    public static final ItemEntry<RobotConnectorItem> ROBOT_CONNECTOR =
+        REGISTRATE.item("robot_connector", RobotConnectorItem::new)
             .properties(b -> b.stacksTo(1))
             .register();
 

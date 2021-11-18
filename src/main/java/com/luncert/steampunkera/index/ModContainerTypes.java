@@ -2,6 +2,7 @@ package com.luncert.steampunkera.index;
 
 import com.luncert.steampunkera.SteampunkEra;
 import com.luncert.steampunkera.content.core.robot.RobotContainer;
+import com.luncert.steampunkera.content.core.robot.RobotScreen;
 import com.luncert.steampunkera.content.core.robotchargestation.RobotChargeStationContainer;
 import com.luncert.steampunkera.content.core.robotchargestation.RobotChargeStationScreen;
 import com.simibubi.create.content.schematics.block.SchematicTableContainer;
@@ -9,6 +10,7 @@ import com.simibubi.create.content.schematics.block.SchematicTableScreen;
 import com.simibubi.create.repack.registrate.builders.ContainerBuilder;
 import com.simibubi.create.repack.registrate.util.entry.ContainerEntry;
 import com.simibubi.create.repack.registrate.util.nullness.NonNullSupplier;
+import dan200.computercraft.client.gui.GuiComputer;
 import dan200.computercraft.shared.network.container.ComputerContainerData;
 import dan200.computercraft.shared.network.container.ContainerData;
 import net.minecraft.client.gui.IHasContainer;
@@ -23,10 +25,8 @@ public class ModContainerTypes {
 
   public static void register() {}
 
-  private static final DeferredRegister<ContainerType<?>> REGISTRATE = DeferredRegister.create(ForgeRegistries.CONTAINERS, "steampunkera");
-
-  public static final RegistryObject<ContainerType<RobotContainer>> ROBOT =
-      REGISTRATE.register("robot", () -> ContainerData.toType(ComputerContainerData::new, RobotContainer::new));
+  public static final ContainerEntry<RobotContainer> ROBOT =
+      register("robot", RobotContainer::create, () -> RobotScreen::create);
 
   public static final ContainerEntry<RobotChargeStationContainer> ROBOT_CHARGE_STATION =
       register("robot_charge_station", RobotChargeStationContainer::new, () -> RobotChargeStationScreen::new);

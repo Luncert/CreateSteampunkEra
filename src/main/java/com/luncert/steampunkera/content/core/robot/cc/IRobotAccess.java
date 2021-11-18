@@ -10,27 +10,32 @@ import net.minecraft.world.World;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+/**
+ * Proxy of RobotBrain.
+ */
 public interface IRobotAccess {
 
-  @Nonnull
   World getWorld();
 
-  @Nonnull
   BlockPos getPosition();
 
-  @Nonnull
   Direction getDirection();
 
-  @Nullable
   GameProfile getOwningPlayer();
 
-  @Nonnull
-  IInventory getInventory();
-
-  MethodResult assemble();
-
-  MethodResult dissemble();
-
-  @Nonnull
   MethodResult executeCommand(@Nonnull IRobotCommand command);
+
+  boolean isAssembled();
+
+  void assemble(boolean assembleStructure);
+
+  void dissemble();
+
+  boolean isMoving();
+
+  void forward(int n);
+
+  boolean isRotating();
+
+  // void moveTo(int x, int y, int z);
 }

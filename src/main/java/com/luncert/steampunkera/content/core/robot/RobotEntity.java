@@ -1,15 +1,17 @@
 package com.luncert.steampunkera.content.core.robot;
 
 import com.luncert.steampunkera.content.common.SimpleDirection;
-import com.luncert.steampunkera.content.net.CCEPacketHandler;
-import com.luncert.steampunkera.content.net.CRobotPacket;
 import com.luncert.steampunkera.content.core.robot.cc.ComputerEntityBase;
 import com.luncert.steampunkera.content.core.robot.cc.IRobotAccess;
 import com.luncert.steampunkera.content.core.robot.cc.RobotAPI;
+import com.luncert.steampunkera.content.net.CCEPacketHandler;
+import com.luncert.steampunkera.content.net.CRobotPacket;
 import com.luncert.steampunkera.index.ModBlocks;
 import com.luncert.steampunkera.index.ModEntityTypes;
+import dan200.computercraft.ComputerCraft;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
 import dan200.computercraft.shared.computer.core.ServerComputer;
+import dan200.computercraft.shared.network.container.ComputerContainerData;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -18,6 +20,8 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.*;
 import net.minecraft.entity.passive.WaterMobEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.DirectionalPlaceContext;
 import net.minecraft.item.ItemStack;
@@ -29,7 +33,6 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -43,7 +46,6 @@ import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import net.minecraftforge.fml.network.NetworkHooks;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.List;
@@ -59,19 +61,16 @@ import static com.luncert.steampunkera.content.core.robot.RobotMovement.MOVEMENT
  */
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class RobotEntity extends ComputerEntityBase implements IEntityAdditionalSpawnData {
-
-    // private static final Logger LOGGER = LogManager.getLogger();
+public class RobotEntity extends ComputerEntityBase implements IEntityAdditionalSpawnData, INamedContainerProvider {
 
     private static final DataParameter<Integer> SPEED = EntityDataManager.defineId(RobotEntity.class, DataSerializers.INT);
     private static final DataParameter<Boolean> CLOCKWISE_ROTATION = EntityDataManager.defineId(RobotEntity.class, DataSerializers.BOOLEAN);
     private static final DataParameter<Float> WAITING_Y_ROT = EntityDataManager.defineId(RobotEntity.class, DataSerializers.FLOAT);
     private static final DataParameter<Optional<RobotMovement>> WAITING_MOVEMENT = EntityDataManager.defineId(RobotEntity.class, MOVEMENT_SERIALIZER);
 
-    private final RobotBrain brain;
+    private RobotBrain brain;
 
     private BlockState blockState = ModBlocks.ROBOT.get().defaultBlockState();
-    private int time;
     private float deltaRotation;
     public CompoundNBT blockData;
 
@@ -97,9 +96,10 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
     }
 
     // for client
-    public RobotEntity(World world, BlockPos pos, BlockState blockState) {
+    public RobotEntity(World world, BlockPos pos, BlockState blockState, RobotBrain brain) {
         this(ModEntityTypes.ROBOT.get(), world);
         this.blockState = blockState;
+        this.brain = brain;
         // following data will be synced automatically
         setPos(pos.getX() + .5f, pos.getY(), pos.getZ() + .5f);
         setDeltaMovement(Vector3d.ZERO);
@@ -109,16 +109,16 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
 
     @Override
     protected ServerComputer createComputer(int instanceID, int computerID) {
-        ServerComputer computer = new ServerComputer(this.level, computerID,
-            this.label, instanceID, this.getFamily(), 39, 13);
-        computer.setPosition(this.blockPosition());
-        computer.addAPI(new RobotAPI(computer.getAPIEnvironment(), this.getAccess()));
-        this.brain.setupComputer(computer);
+        ServerComputer computer = new ServerComputer(this.level, computerID, label, instanceID, getFamily(),
+            ComputerCraft.computerTermWidth, ComputerCraft.computerTermHeight);
+        computer.setPosition(blockPosition());
+        computer.addAPI(new RobotAPI(computer.getAPIEnvironment(), getAccess()));
+        brain.setupComputer(computer);
         return computer;
     }
 
     public IRobotAccess getAccess() {
-        return this.brain;
+        return brain;
     }
 
     @Override
@@ -137,11 +137,50 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
     }
 
     @Override
-    public INamedContainerProvider getContainerProvider(ServerComputer computer,
-                                                        PlayerEntity player,
-                                                        @Nonnull Hand hand,
-                                                        RobotControllerItem controller) {
-        return new RobotContainer.Factory(computer, player.getItemInHand(hand), controller, hand);
+    public boolean stillValid(PlayerEntity player) {
+        return isUsable(player, false);
+    }
+
+    @Override
+    public boolean isAssembled() {
+        // always true for entity
+        return true;
+    }
+
+    @Override
+    public void assemble(boolean assembleStructure) {
+        // ignore
+    }
+
+    @Override
+    public void dissemble() {
+        tryDissemble(ModBlocks.ROBOT.get(), getBlockPos());
+    }
+
+    @Override
+    public boolean isMoving() {
+        Optional<RobotMovement> opt = getWaitingMovement();
+        if (opt.isPresent()) {
+            RobotMovement movement = opt.get();
+            double v = position().get(movement.axis);
+            if (v != movement.expectedPos) {
+                double absDist = Math.abs(movement.expectedPos - v);
+                if (absDist != 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void forward(int n) {
+        SimpleDirection direction = getSimpleDirection();
+        Direction.Axis axis = direction.getAxis();
+        int posDelta = direction.isPositive() ? n : -n;
+        // TODO: collision
+        setWaitingMovement(new RobotMovement(axis, direction.isPositive(),
+            blockPosition().get(axis) + .5f + posDelta));
     }
 
     // entity
@@ -191,21 +230,8 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
             return;
         }
 
-        Block robotBlock = this.blockState.getBlock();
-        BlockPos entityPos = this.blockPosition();
-
-        if (this.time++ == 0) {
-            // remove block when entity is created
-            if (this.level.getBlockState(entityPos).is(robotBlock)) {
-                this.level.removeBlock(entityPos, false);
-            } else if (!this.level.isClientSide) {
-                this.remove();
-                return;
-            }
-        }
-
-        // super.tick();
-
+        super.tick();
+        brain.update();
         tickLerp();
 
         // if server has passenger, this method will return false
@@ -452,29 +478,35 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
     }
 
     private void tryDissemble(Block robotBlock, BlockPos entityPos) {
-        this.remove();
+        remove();
 
         // get the current block where entity is
-        BlockState blockstate = this.level.getBlockState(entityPos);
-        boolean canBeReplaced = blockstate.canBeReplaced(new DirectionalPlaceContext(this.level, entityPos, net.minecraft.util.Direction.DOWN, ItemStack.EMPTY, net.minecraft.util.Direction.UP));
-        boolean canSurvival = this.blockState.canSurvive(this.level, entityPos);
-        if (canBeReplaced && canSurvival) {
-            if (this.level.setBlock(entityPos, this.blockState, 3)) {
-                if (this.blockData != null && this.blockState.hasTileEntity()) {
-                    // create tile entity for block
-                    TileEntity tileentity = this.level.getBlockEntity(entityPos);
-                    if (tileentity != null) {
-                        CompoundNBT compoundnbt = tileentity.save(new CompoundNBT());
+        BlockState target = level.getBlockState(entityPos);
+        boolean canBeReplaced = target.canBeReplaced(
+            new DirectionalPlaceContext(level, entityPos, net.minecraft.util.Direction.DOWN, ItemStack.EMPTY, net.minecraft.util.Direction.UP));
+        boolean canSurvival = blockState.canSurvive(level, entityPos);
 
-                        for(String s : this.blockData.getAllKeys()) {
-                            INBT inbt = this.blockData.get(s);
+        if (canBeReplaced && canSurvival) {
+            if (level.setBlock(entityPos, blockState, 3)) {
+                if (blockData != null && blockState.hasTileEntity()) {
+                    // create tile entity for block
+                    RobotTileEntity placedTileEntity = (RobotTileEntity) level.getBlockEntity(entityPos);
+                    if (placedTileEntity != null) {
+                        placedTileEntity.setRobotBrain(brain);
+                        brain.setOwner(placedTileEntity);
+
+                        CompoundNBT nbt = placedTileEntity.save(new CompoundNBT());
+
+                        // copy entity's block data to tile entity
+                        for(String s : blockData.getAllKeys()) {
+                            INBT inbt = blockData.get(s);
                             if (!"x".equals(s) && !"y".equals(s) && !"z".equals(s)) {
-                                compoundnbt.put(s, inbt.copy());
+                                nbt.put(s, inbt.copy());
                             }
                         }
 
-                        tileentity.load(this.blockState, compoundnbt);
-                        tileentity.setChanged();
+                        placedTileEntity.load(blockState, nbt);
+                        placedTileEntity.setChanged();
                     }
                 }
             } else {
@@ -502,11 +534,14 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
             // shift key is pressed
             return ActionResultType.PASS;
         } else {
-            if (!this.level.isClientSide) {
-                return player.startRiding(this) ? ActionResultType.CONSUME : ActionResultType.PASS;
-            } else {
-                return ActionResultType.SUCCESS;
+            // open terminal
+            if (!level.isClientSide && isUsable(player, false)) {
+                ServerComputer computer = createServerComputer();
+                computer.turnOn();
+                (new ComputerContainerData(computer)).open(player, this);
             }
+
+            return ActionResultType.SUCCESS;
         }
     }
 
@@ -714,5 +749,11 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
     @Override
     public IPacket<?> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    @Nullable
+    @Override
+    public Container createMenu(int id, PlayerInventory inventory, PlayerEntity player) {
+        return RobotContainer.create(id, brain);
     }
 }

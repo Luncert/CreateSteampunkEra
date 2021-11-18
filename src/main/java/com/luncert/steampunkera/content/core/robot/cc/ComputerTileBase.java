@@ -10,6 +10,7 @@ import dan200.computercraft.shared.computer.blocks.IComputerTile;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
 import dan200.computercraft.shared.computer.core.ComputerState;
 import dan200.computercraft.shared.computer.core.ServerComputer;
+import dan200.computercraft.shared.network.container.ComputerContainerData;
 import dan200.computercraft.shared.util.DirectionUtil;
 import dan200.computercraft.shared.util.RedstoneUtil;
 import joptsimple.internal.Strings;
@@ -17,6 +18,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.RedstoneWireBlock;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
@@ -41,7 +43,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public abstract class ComputerTileBase extends TileGeneric implements IComputerTile,
-    ITickableTileEntity, INameable, IComputerContainer {
+    ITickableTileEntity, INameable, IComputerContainer, INamedContainerProvider {
 
   private static final String NBT_ID = "ComputerId";
   private static final String NBT_LABEL = "Label";
@@ -106,9 +108,19 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
         && currentItem.getItem() == Items.NAME_TAG
         && this.canNameWithTag(player)
         && currentItem.hasCustomHoverName()) {
-      if (!this.getLevel().isClientSide) {
+      // name robot
+      if (!level.isClientSide) {
         this.setLabel(currentItem.getHoverName().getString());
         currentItem.shrink(1);
+      }
+
+      return ActionResultType.SUCCESS;
+    } else if (!player.isCrouching()) {
+      // open terminal
+      if (!level.isClientSide && this.isUsable(player, false)) {
+        ServerComputer computer = createServerComputer();
+        computer.turnOn();
+        (new ComputerContainerData(computer)).open(player, this);
       }
 
       return ActionResultType.SUCCESS;

@@ -1,47 +1,67 @@
 package com.luncert.steampunkera.content.core.robot.cc;
 
-import javax.annotation.Nonnull;
+import mcp.MethodsReturnNonnullByDefault;
+
 import javax.annotation.Nullable;
 
+@MethodsReturnNonnullByDefault
 public class RobotCommandResult {
 
-  private static final RobotCommandResult EMPTY_SUCCESS = new RobotCommandResult(true, null, null);
-  private static final RobotCommandResult EMPTY_FAILURE = new RobotCommandResult(false, null, null);
+  public enum Status {
+    Succeed,
+    Failed,
+    Executing
+  }
 
-  private final boolean success;
+  private static final RobotCommandResult EMPTY_SUCCESS =
+      new RobotCommandResult(Status.Succeed, null, null);
+  private static final RobotCommandResult EMPTY_FAILURE =
+      new RobotCommandResult(Status.Failed, null, null);
+  private static final RobotCommandResult EMPTY_EXECUTING =
+      new RobotCommandResult(Status.Executing, null, null);
+
+  private final Status status;
   private final String errorMessage;
   private final Object[] results;
 
-  @Nonnull
   public static RobotCommandResult success() {
     return EMPTY_SUCCESS;
   }
 
-  @Nonnull
-  public static RobotCommandResult success(@Nullable Object[] results) {
+  public static RobotCommandResult success(Object...results) {
     return results != null && results.length != 0
-        ? new RobotCommandResult(true, null, results) : EMPTY_SUCCESS;
+        ? new RobotCommandResult(Status.Succeed, null, results) : EMPTY_SUCCESS;
   }
 
-  @Nonnull
   public static RobotCommandResult failure() {
     return EMPTY_FAILURE;
   }
 
-  @Nonnull
   public static RobotCommandResult failure(@Nullable String errorMessage) {
     return errorMessage != null
-        ? new RobotCommandResult(false, errorMessage, null) : EMPTY_FAILURE;
+        ? new RobotCommandResult(Status.Failed, errorMessage, null) : EMPTY_FAILURE;
   }
 
-  public RobotCommandResult(boolean success, String errorMessage, Object[] results) {
-    this.success = success;
+  public static RobotCommandResult executing() {
+    return EMPTY_EXECUTING;
+  }
+
+  public static boolean isSuccess(RobotCommandResult result) {
+    return result != null && Status.Succeed.equals(result.getStatus());
+  }
+
+  public static boolean isExecuting(RobotCommandResult result) {
+    return result != null && Status.Executing.equals(result.getStatus());
+  }
+
+  public RobotCommandResult(Status status, String errorMessage, Object[] results) {
+    this.status = status;
     this.errorMessage = errorMessage;
     this.results = results;
   }
 
-  public boolean isSuccess() {
-    return this.success;
+  public Status getStatus() {
+    return status;
   }
 
   @Nullable

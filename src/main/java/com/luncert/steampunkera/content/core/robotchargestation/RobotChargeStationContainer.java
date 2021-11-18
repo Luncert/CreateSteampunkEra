@@ -52,7 +52,7 @@ public class RobotChargeStationContainer extends Container {
     Slot inputSlot = new SlotItemHandler(te.inventory, 0, 123, 22) {
       @Override
       public boolean mayPlace(ItemStack stack) {
-        return ModItems.ROBOT_CONTROLLER.isIn(stack);
+        return true;
       }
     };
 

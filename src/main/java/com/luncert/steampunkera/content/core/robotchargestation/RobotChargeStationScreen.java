@@ -1,13 +1,10 @@
 package com.luncert.steampunkera.content.core.robotchargestation;
 
 import com.google.common.collect.ImmutableList;
-import com.luncert.steampunkera.content.core.robot.RobotControllerItem;
-import com.luncert.steampunkera.content.core.robot.RobotControllerItem.RobotControllerItemEntity;
 import com.luncert.steampunkera.content.core.robot.RobotTileEntity;
 import com.luncert.steampunkera.content.util.Lang;
 import com.luncert.steampunkera.index.ModBlocks;
 import com.luncert.steampunkera.index.ModGuiTextures;
-import com.luncert.steampunkera.index.ModItems;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.simibubi.create.foundation.gui.AbstractSimiContainerScreen;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
@@ -97,11 +94,6 @@ public class RobotChargeStationScreen extends AbstractSimiContainerScreen<RobotC
     Optional<RobotTileEntity> opt = menu.getTileEntity().getConnectedRobot();
     if (opt.isPresent()) {
       RobotTileEntity robot = opt.get();
-      if (robot.hasBoundController()) {
-        label.text = controllerBound;
-      } else {
-        label.text = noControllerBound;
-      }
     } else {
       label.text = noRobotFound;
     }
@@ -113,19 +105,6 @@ public class RobotChargeStationScreen extends AbstractSimiContainerScreen<RobotC
       menu.getTileEntity().getConnectedRobot().ifPresent(robot -> {
         ItemStack inputStack = menu.getTileEntity().inventory.getStackInSlot(0);
 
-        if (ModItems.ROBOT_CONTROLLER.isIn(inputStack)) {
-          RobotControllerItemEntity controller = RobotControllerItem.wrap(inputStack);
-
-          if (robot.hasBoundController()) {
-            if (controller.getRobotServer() == robot.getComputerID()) {
-              robot.setControllerBound(false);
-              controller.unbindRobotServer();
-            }
-          } else {
-            robot.setControllerBound(true);
-            controller.bindRobotServer(robot.getComputerID());
-          }
-        }
       });
     }
 

@@ -2,23 +2,19 @@ package com.luncert.steampunkera.content.core.robot;
 
 import com.luncert.steampunkera.content.core.robot.cc.*;
 import com.mojang.authlib.GameProfile;
-import dan200.computercraft.api.lua.ILuaCallback;
 import dan200.computercraft.api.lua.MethodResult;
-import dan200.computercraft.api.peripheral.IPeripheral;
-import dan200.computercraft.api.turtle.TurtleSide;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
 import dan200.computercraft.shared.computer.core.ServerComputer;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -26,11 +22,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class RobotBrain implements IRobotAccess {
 
-  private static final Logger LOGGER = LogManager.getLogger();
   private static final String EVENT_ROBOT_RESPONSE = "robot_response";
 
   private final Queue<RobotCommandQueueEntry> commandQueue;
-  private final Map<TurtleSide, IPeripheral> peripherals;
   private IComputerContainer owner;
   private ComputerProxy proxy;
   private GameProfile owningPlayer;
@@ -39,7 +33,6 @@ public class RobotBrain implements IRobotAccess {
   public RobotBrain(IComputerContainer robot) {
     this.owner = robot;
     this.commandQueue = new ArrayDeque<>();
-    this.peripherals = new EnumMap<>(TurtleSide.class);
   }
 
   public void setOwner(IComputerContainer owner) {
@@ -47,33 +40,27 @@ public class RobotBrain implements IRobotAccess {
   }
 
   public IComputerContainer getOwner() {
-    return this.owner;
+    return owner;
   }
 
   public ComputerProxy getProxy() {
-    if (this.proxy == null) {
-      this.proxy = new ComputerProxy(this.owner);
+    if (proxy == null) {
+      proxy = new ComputerProxy(this.owner);
     }
 
-    return this.proxy;
+    return proxy;
   }
 
   public ComputerFamily getFamily() {
-    return this.owner.getFamily();
+    return owner.getFamily();
+  }
+
+  public void setOwningPlayer(GameProfile profile) {
+    owningPlayer = profile;
   }
 
   public void setupComputer(ServerComputer computer) {
-    this.updatePeripherals(computer);
-  }
-
-  public void update() {
-    World world = this.getWorld();
-    if (!world.isClientSide) {
-      this.updateCommands();
-      if (this.owner.isRemoved()) {
-        return;
-      }
-    }
+    // update peripheral
   }
 
   public void readFromNBT(CompoundNBT nbt) {
@@ -108,6 +95,12 @@ public class RobotBrain implements IRobotAccess {
     this.writeCommon(nbt);
   }
 
+  private void readCommon(CompoundNBT nbt) {
+  }
+
+  private void writeCommon(CompoundNBT nbt) {
+  }
+
   // robot api
 
   @Nonnull
@@ -131,106 +124,99 @@ public class RobotBrain implements IRobotAccess {
     return owningPlayer;
   }
 
-  @Nonnull
   @Override
-  public IInventory getInventory() {
-    return null;
+  public boolean isAssembled() {
+    return owner.isAssembled();
   }
 
   @Override
-  public MethodResult assemble() {
-    return null;
+  public void assemble(boolean assembleStructure) {
+    owner.assemble(assembleStructure);
   }
 
   @Override
-  public MethodResult dissemble() {
-    return null;
+  public void dissemble() {
+    owner.dissemble();
+  }
+
+  @Override
+  public boolean isMoving() {
+    return owner.isMoving();
+  }
+
+  @Override
+  public void forward(int n) {
+    owner.forward(n);
   }
 
   @Nonnull
   public MethodResult executeCommand(@Nonnull IRobotCommand command) {
-    LOGGER.info(command);
-    if (this.getWorld().isClientSide) {
+    if (getWorld().isClientSide) {
       throw new UnsupportedOperationException("Cannot run commands on the client");
-    } else if (this.commandQueue.size() > 16) {
+    } else if (commandQueue.size() > 16) {
       return MethodResult.of(false, "Too many ongoing robot commands");
     } else {
-      this.commandQueue.offer(new RobotCommandQueueEntry(++this.commandsIssued, command));
-      int commandID = this.commandsIssued;
-      return (new CommandCallback(commandID)).pull;
+      commandQueue.offer(new RobotCommandQueueEntry(++commandsIssued, command));
+      return RobotCommandCallback.hook(commandsIssued, EVENT_ROBOT_RESPONSE);
     }
   }
 
-  private static final class CommandCallback implements ILuaCallback {
-    final MethodResult pull = MethodResult.pullEvent("turtle_response", this);
-    private final int command;
+  // update
 
-    CommandCallback(int command) {
-      this.command = command;
-    }
-
-    @Nonnull
-    public MethodResult resume(Object[] response) {
-      if (response.length >= 3 && response[1] instanceof Number && response[2] instanceof Boolean) {
-        return ((Number)response[1]).intValue() != this.command ?
-            this.pull : MethodResult.of(Arrays.copyOfRange(response, 2, response.length));
-      } else {
-        return this.pull;
+  public void update() {
+    World world = this.getWorld();
+    if (!world.isClientSide) {
+      this.updateCommands();
+      if (this.owner.isRemoved()) {
+        return;
       }
     }
-  }
-
-  // data
-
-  private void readCommon(CompoundNBT nbt) {
-  }
-
-  private void writeCommon(CompoundNBT nbt) {
   }
 
   private void updateCommands() {
-    if (!this.commandQueue.isEmpty()) {
-      ServerComputer computer = this.owner.getServerComputer().orElse(null);
+    if (commandQueue.isEmpty()) {
+      return;
+    }
 
-      if (computer == null || computer.getComputer().getMainThreadMonitor().canWork()) {
-        RobotCommandQueueEntry task = this.commandQueue.poll();
+    ServerComputer computer = owner.getServerComputer().orElse(null);
 
-        if (task != null) {
-          long start = System.nanoTime();
-          RobotCommandResult result = task.command.execute(this);
-          long end = System.nanoTime();
+    if (computer == null || computer.getComputer().getMainThreadMonitor().canWork()) {
+      RobotCommandQueueEntry task = commandQueue.peek();
+      if (task == null) {
+        commandQueue.remove();
+        return;
+      }
 
-          if (computer != null) {
-            computer.getComputer().getMainThreadMonitor()
-                .trackWork(end - start, TimeUnit.NANOSECONDS);
+      long start = System.nanoTime();
+      RobotCommandResult result = task.command.execute(this);
+      long end = System.nanoTime();
 
-            int callbackID = task.callbackID;
-            if (callbackID < 0) {
-              return;
-            }
+      if (computer != null) {
+        computer.getComputer().getMainThreadMonitor().trackWork(end - start, TimeUnit.NANOSECONDS);
 
-            if (result != null && result.isSuccess()) {
-              Object[] results = result.getResults();
-              if (results != null) {
-                Object[] arguments = new Object[results.length + 2];
-                arguments[0] = callbackID;
-                arguments[1] = true;
-                System.arraycopy(results, 0, arguments, 2, results.length);
-                computer.queueEvent(EVENT_ROBOT_RESPONSE, arguments);
-              } else {
-                computer.queueEvent(EVENT_ROBOT_RESPONSE, new Object[]{callbackID, true});
-              }
+        int callbackID = task.callbackID;
+        if (callbackID >= 0) {
+          Object[] evtArgs;
+          if (RobotCommandResult.isSuccess(result)) {
+            Object[] results = result.getResults();
+            if (results != null) {
+              evtArgs = new Object[results.length + 2];
+              evtArgs[0] = callbackID;
+              evtArgs[1] = true;
+              System.arraycopy(results, 0, evtArgs, 2, results.length);
             } else {
-              computer.queueEvent(EVENT_ROBOT_RESPONSE,
-                  new Object[]{callbackID, false, result != null ? result.getErrorMessage() : null});
+              evtArgs = new Object[]{callbackID, true};
             }
+          } else if (RobotCommandResult.isExecuting(result)) {
+            return;
+          } else {
+            evtArgs = new Object[]{callbackID, false, result != null ? result.getErrorMessage() : null};
           }
+
+          commandQueue.remove();
+          computer.queueEvent(EVENT_ROBOT_RESPONSE, evtArgs);
         }
       }
     }
-  }
-
-  private void updatePeripherals(ServerComputer serverComputer) {
-    // TODO
   }
 }

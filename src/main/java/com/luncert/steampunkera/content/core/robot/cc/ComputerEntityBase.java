@@ -25,10 +25,12 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.common.util.NonNullConsumer;
 import net.minecraftforge.fml.network.NetworkHooks;
 
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Objects;
 import java.util.Optional;
 
+// TODO sync computer data from tile entity
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
 public abstract class ComputerEntityBase extends Entity implements IComputerContainer {
@@ -91,7 +93,7 @@ public abstract class ComputerEntityBase extends Entity implements IComputerCont
   @Override
   public void tick() {
     if (!this.level.isClientSide) {
-      ServerComputer computer = this.createServerComputer();
+      ServerComputer computer = createServerComputer();
       if (computer == null) {
         return;
       }
@@ -212,6 +214,7 @@ public abstract class ComputerEntityBase extends Entity implements IComputerCont
     return family;
   }
 
+  @Nullable
   public ServerComputer createServerComputer() {
     if (this.level.isClientSide) {
       return null;
