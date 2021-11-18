@@ -128,7 +128,7 @@ public class RobotBrain implements IRobotAccess {
   @Nullable
   @Override
   public GameProfile getOwningPlayer() {
-    return null;
+    return owningPlayer;
   }
 
   @Nonnull

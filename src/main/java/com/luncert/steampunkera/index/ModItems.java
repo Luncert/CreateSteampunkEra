@@ -15,6 +15,7 @@ public class ModItems {
 
     public static final ItemEntry<RobotControllerItem> ROBOT_CONTROLLER =
         REGISTRATE.item("robot_controller", RobotControllerItem::new)
+            .properties(b -> b.stacksTo(1))
             .register();
 
     public static final ItemEntry<GunItem> PISTOL =

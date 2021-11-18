@@ -1,5 +1,7 @@
 package com.luncert.steampunkera.content.core.robotchargestation;
 
+import com.luncert.steampunkera.content.core.robot.RobotTileEntity;
+import com.luncert.steampunkera.index.ModBlocks;
 import com.simibubi.create.foundation.gui.IInteractionChecker;
 import com.simibubi.create.foundation.tileEntity.SyncedTileEntity;
 import com.simibubi.create.foundation.utility.Lang;
@@ -12,12 +14,15 @@ import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.ITickableTileEntity;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.items.ItemStackHandler;
 
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.Optional;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
@@ -86,5 +91,16 @@ public class RobotChargeStationTileEntity extends SyncedTileEntity
   @Override
   public void tick() {
 
+  }
+
+  public Optional<RobotTileEntity> getConnectedRobot() {
+    BlockPos top = getBlockPos().above();
+    if (level != null && ModBlocks.ROBOT.has(level.getBlockState(top))) {
+      TileEntity blockEntity = level.getBlockEntity(top);
+      if (blockEntity instanceof RobotTileEntity) {
+        return Optional.of((RobotTileEntity) blockEntity);
+      }
+    }
+    return Optional.empty();
   }
 }

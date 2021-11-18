@@ -4,5 +4,9 @@
   "block.steampunkera.robot_charge_station": "Robot Charge Station",
   "block.steampunkera.pistol": "Pistol",
   "block.steampunkera.robot": "Robot",
-  "steampunkera.gui.robot_charge_station.title": "Robot Charge Station"
+  "steampunkera.gui.robot_charge_station.title": "Robot Charge Station",
+  "steampunkera.gui.robot_charge_station.no_robot_found": "No Robot Found",
+  "steampunkera.gui.robot_charge_station.no_controller_bound": "No Robot Controller Bound",
+  "steampunkera.gui.robot_charge_station.controller_bound": "Robot Controller Bound",
+  "steampunkera.msg.robot_controller_item.no_robot_bound": "No Robot Bound"
 }

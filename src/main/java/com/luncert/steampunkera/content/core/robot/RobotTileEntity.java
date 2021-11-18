@@ -6,8 +6,10 @@ import dan200.computercraft.shared.common.TileGeneric;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
 import dan200.computercraft.shared.computer.core.ComputerState;
 import dan200.computercraft.shared.computer.core.ServerComputer;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.container.INamedContainerProvider;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
@@ -19,6 +21,8 @@ public class RobotTileEntity extends ComputerTileBase implements IComputerContai
 
     private final RobotBrain brain;
     private LazyOptional<IPeripheral> peripheral;
+
+    private boolean controllerBound;
 
     public RobotTileEntity(TileEntityType<? extends TileGeneric> type) {
         super(type, ComputerFamily.NORMAL);
@@ -51,6 +55,27 @@ public class RobotTileEntity extends ComputerTileBase implements IComputerContai
         computer.addAPI(new RobotAPI(computer.getAPIEnvironment(), this.getAccess()));
         this.brain.setupComputer(computer);
         return computer;
+    }
+
+    @Nonnull
+    public CompoundNBT save(@Nonnull CompoundNBT nbt) {
+        nbt.putBoolean("ControllerBound", controllerBound);
+        return super.save(nbt);
+    }
+
+    @Override
+    public void load(@Nonnull BlockState state, @Nonnull CompoundNBT nbt) {
+        controllerBound = nbt.getBoolean("ControllerBound");
+        super.load(state, nbt);
+    }
+
+    public boolean hasBoundController() {
+        return controllerBound;
+    }
+
+    public void setControllerBound(boolean controllerBound) {
+        this.controllerBound = controllerBound;
+        setChanged();
     }
 
     public IRobotAccess getAccess() {

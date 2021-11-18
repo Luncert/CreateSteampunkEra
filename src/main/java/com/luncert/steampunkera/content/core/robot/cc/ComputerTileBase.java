@@ -134,7 +134,7 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
 
   @Override
   public void tick() {
-    if (!this.getLevel().isClientSide) {
+    if (!getLevel().isClientSide) {
       ServerComputer computer = this.createServerComputer();
       if (computer == null) {
         return;
@@ -260,6 +260,9 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
 
   @Override
   public final int getComputerID() {
+    if (computerID < 0) {
+
+    }
     return this.computerID;
   }
 
