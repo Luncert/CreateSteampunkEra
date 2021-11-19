@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "steampunkera:block/robot/robot_anchor"
+    }
+  }
+}

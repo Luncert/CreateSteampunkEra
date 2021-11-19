@@ -1,12 +1,16 @@
 package com.luncert.steampunkera.content.core.robot;
 
 import com.luncert.steampunkera.content.common.SimpleDirection;
+import com.luncert.steampunkera.content.core.base.DirectionalBlock;
 import com.luncert.steampunkera.content.core.robot.cc.*;
+import com.luncert.steampunkera.content.core.robot.create.RobotContraption;
 import com.luncert.steampunkera.content.net.CCEPacketHandler;
 import com.luncert.steampunkera.content.net.CRobotPacket;
 import com.luncert.steampunkera.content.util.Common;
 import com.luncert.steampunkera.index.ModBlocks;
 import com.luncert.steampunkera.index.ModEntityTypes;
+import com.simibubi.create.content.contraptions.components.structureMovement.AssemblyException;
+import com.simibubi.create.content.contraptions.components.structureMovement.OrientedContraptionEntity;
 import dan200.computercraft.ComputerCraft;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
 import dan200.computercraft.shared.computer.core.ServerComputer;
@@ -96,7 +100,8 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
     }
 
     // for server
-    public RobotEntity(World world, BlockPos pos, BlockState blockState, RobotBrain brain, ComputerData data) {
+    public RobotEntity(World world, BlockPos pos, BlockState blockState,
+                       RobotBrain brain, ComputerData data) {
         super(ModEntityTypes.ROBOT.get(), world, data);
         init(brain);
 
@@ -160,11 +165,6 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
     }
 
     @Override
-    public void assemble(boolean assembleStructure) {
-        // ignore
-    }
-
-    @Override
     public void dissemble() {
         tryDissemble(ModBlocks.ROBOT.get(), getBlockPos());
     }
@@ -175,12 +175,7 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
         if (opt.isPresent()) {
             RobotMovement movement = opt.get();
             double v = position().get(movement.axis);
-            if (v != movement.expectedPos) {
-                double absDist = Math.abs(movement.expectedPos - v);
-                if (absDist != 0) {
-                    return true;
-                }
-            }
+            return v != movement.expectedPos;
         }
         return false;
     }
@@ -215,6 +210,28 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
     }
 
     // entity
+
+    public void assembleStructure(BlockPos pos) {
+        RobotContraption contraption = new RobotContraption();
+        try {
+            if (!contraption.assemble(level, pos)) {
+                return;
+            }
+
+            Direction initialOrientation = blockState.getValue(DirectionalBlock.FACING);
+
+            contraption.removeBlocksFromWorld(level, BlockPos.ZERO);
+            contraption.startMoving(level);
+            contraption.expandBoundsAroundAxis(Direction.Axis.Y);
+
+            OrientedContraptionEntity structure = OrientedContraptionEntity.create(level, contraption, initialOrientation);
+            structure.setPos(pos.getX() + .5f, pos.getY(), pos.getZ() + .5f);
+            level.addFreshEntity(structure);
+            structure.startRiding(this);
+        } catch (AssemblyException e) {
+            // ignored
+        }
+    }
 
     @OnlyIn(Dist.CLIENT)
     public void lerpTo(double lerpX, double lerpY, double lerpZ, float lerpYRot, float lerpXRot,
@@ -510,6 +527,8 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
     private void tryDissemble(Block robotBlock, BlockPos entityPos) {
         remove();
 
+        disassembleStructure();
+
         // get the current block where entity is
         BlockState target = level.getBlockState(entityPos);
         boolean canBeReplaced = target.canBeReplaced(
@@ -543,6 +562,18 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
                 tryDropItemOf(robotBlock);
             }
         }
+    }
+
+    private void disassembleStructure() {
+        if (getPassengers().isEmpty()) {
+            return;
+        }
+        Entity entity = getPassengers().get(0);
+        if (!(entity instanceof OrientedContraptionEntity)) {
+            return;
+        }
+
+        // OrientedContraptionEntity contraption = (OrientedContraptionEntity) entity;
     }
 
     private float getRotationSpeed() {
@@ -609,7 +640,8 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
 
     @Override
     public double getPassengersRidingOffset() {
-        return 0.8D;
+        // let robot anchor block overlay robot entity
+        return 0D;
     }
 
     @OnlyIn(Dist.CLIENT)
