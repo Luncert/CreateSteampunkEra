@@ -77,7 +77,7 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
     private RobotBrain brain;
 
     private BlockState blockState = ModBlocks.ROBOT.get().defaultBlockState();
-    private float deltaRotation;
+    float deltaRotation;
     public CompoundNBT blockData;
 
     // control
