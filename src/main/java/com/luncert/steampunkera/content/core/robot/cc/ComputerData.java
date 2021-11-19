@@ -25,4 +25,17 @@ public class ComputerData {
   public static ComputerData of(ComputerFamily family) {
     return new ComputerData(family);
   }
+
+  @Override
+  public String toString() {
+    return "ComputerData{" +
+        "family=" + family +
+        ", instanceID=" + instanceID +
+        ", computerID=" + computerID +
+        ", label='" + label + '\'' +
+        ", on=" + on +
+        ", startOn=" + startOn +
+        ", fresh=" + fresh +
+        '}';
+  }
 }

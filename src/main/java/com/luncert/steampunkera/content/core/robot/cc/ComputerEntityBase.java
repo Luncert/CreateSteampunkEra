@@ -32,7 +32,6 @@ import java.util.Optional;
 
 import static com.luncert.steampunkera.content.core.robot.cc.ComputerData.*;
 
-// TODO sync computer data from tile entity
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
 public abstract class ComputerEntityBase extends Entity implements IComputerContainer {
@@ -54,32 +53,32 @@ public abstract class ComputerEntityBase extends Entity implements IComputerCont
     }
   }
 
-  protected void unload() {
-    if (data.instanceID >= 0) {
-      if (!this.level.isClientSide) {
-        ComputerCraft.serverComputerRegistry.remove(data.instanceID);
-      }
-
-      data.instanceID = -1;
-    }
-
-  }
-
-  public void destroy() {
-    this.unload();
-    BlockPos pos = this.blockPosition();
-    for (Direction facing : DirectionUtil.FACINGS) {
-      RedstoneUtil.propagateRedstoneOutput(level, pos, facing);
-    }
-  }
-
-  public void onChunkUnloaded() {
-    this.unload();
-  }
-
-  public void setRemoved() {
-    this.unload();
-  }
+  // protected void unload() {
+  //   if (data.instanceID >= 0) {
+  //     if (!this.level.isClientSide) {
+  //       ComputerCraft.serverComputerRegistry.remove(data.instanceID);
+  //     }
+  //
+  //     data.instanceID = -1;
+  //   }
+  //
+  // }
+  //
+  // public void destroy() {
+  //   this.unload();
+  //   BlockPos pos = this.blockPosition();
+  //   for (Direction facing : DirectionUtil.FACINGS) {
+  //     RedstoneUtil.propagateRedstoneOutput(level, pos, facing);
+  //   }
+  // }
+  //
+  // public void onChunkUnloaded() {
+  //   this.unload();
+  // }
+  //
+  // public void setRemoved() {
+  //   this.unload();
+  // }
 
   @Override
   public void scheduleUpdateComputer(boolean startOn) {
@@ -212,28 +211,28 @@ public abstract class ComputerEntityBase extends Entity implements IComputerCont
 
   @Nullable
   public ServerComputer createServerComputer() {
-    if (this.level.isClientSide) {
+    if (level.isClientSide) {
       return null;
-    } else {
-      boolean changed = false;
-      if (data.instanceID < 0) {
-        data.instanceID = ComputerCraft.serverComputerRegistry.getUnusedInstanceID();
-        changed = true;
-      }
-
-      if (!ComputerCraft.serverComputerRegistry.contains(data.instanceID)) {
-        ServerComputer computer = this.createComputer(data.instanceID, data.computerID);
-        ComputerCraft.serverComputerRegistry.add(data.instanceID, computer);
-        data.fresh = true;
-        changed = true;
-      }
-
-      if (changed) {
-        this.updateInput();
-      }
-
-      return ComputerCraft.serverComputerRegistry.get(data.instanceID);
     }
+
+    boolean changed = false;
+    if (data.instanceID < 0) {
+      data.instanceID = ComputerCraft.serverComputerRegistry.getUnusedInstanceID();
+      changed = true;
+    }
+
+    if (!ComputerCraft.serverComputerRegistry.contains(data.instanceID)) {
+      ServerComputer computer = this.createComputer(data.instanceID, data.computerID);
+      ComputerCraft.serverComputerRegistry.add(data.instanceID, computer);
+      data.fresh = true;
+      changed = true;
+    }
+
+    if (changed) {
+      this.updateInput();
+    }
+
+    return ComputerCraft.serverComputerRegistry.get(data.instanceID);
   }
 
   public Optional<ServerComputer> getServerComputer() {

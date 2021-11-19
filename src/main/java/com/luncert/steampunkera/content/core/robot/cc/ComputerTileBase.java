@@ -62,10 +62,11 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
   }
 
   protected void unload() {
+    // TODO unload computer
     if (data.instanceID >= 0) {
-      if (!getLevel().isClientSide) {
-        ComputerCraft.serverComputerRegistry.remove(data.instanceID);
-      }
+      // if (!getLevel().isClientSide) {
+      //   ComputerCraft.serverComputerRegistry.remove(data.instanceID);
+      // }
     }
   }
 
@@ -158,7 +159,6 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
         this.updateOutput();
       }
     }
-
   }
 
   protected abstract void updateBlockState(ComputerState var1);
@@ -295,28 +295,28 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
   }
 
   public ServerComputer createServerComputer() {
-    if (this.getLevel().isClientSide) {
+    if (getLevel().isClientSide) {
       return null;
-    } else {
-      boolean changed = false;
-      if (data.instanceID < 0) {
-        data.instanceID = ComputerCraft.serverComputerRegistry.getUnusedInstanceID();
-        changed = true;
-      }
-
-      if (!ComputerCraft.serverComputerRegistry.contains(data.instanceID)) {
-        ServerComputer computer = this.createComputer(data.instanceID, data.computerID);
-        ComputerCraft.serverComputerRegistry.add(data.instanceID, computer);
-        data.fresh = true;
-        changed = true;
-      }
-
-      if (changed) {
-        this.updateInput();
-      }
-
-      return ComputerCraft.serverComputerRegistry.get(data.instanceID);
     }
+
+    boolean changed = false;
+    if (data.instanceID < 0) {
+      data.instanceID = ComputerCraft.serverComputerRegistry.getUnusedInstanceID();
+      changed = true;
+    }
+
+    if (!ComputerCraft.serverComputerRegistry.contains(data.instanceID)) {
+      ServerComputer computer = this.createComputer(data.instanceID, data.computerID);
+      ComputerCraft.serverComputerRegistry.add(data.instanceID, computer);
+      data.fresh = true;
+      changed = true;
+    }
+
+    if (changed) {
+      this.updateInput();
+    }
+
+    return ComputerCraft.serverComputerRegistry.get(data.instanceID);
   }
 
   @Override

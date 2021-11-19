@@ -100,8 +100,6 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
         super(ModEntityTypes.ROBOT.get(), world, data);
         init(brain);
 
-        this.data = data;
-
         this.blockState = blockState;
         // following data will be synced automatically
         setPos(pos.getX() + .5f, pos.getY(), pos.getZ() + .5f);
