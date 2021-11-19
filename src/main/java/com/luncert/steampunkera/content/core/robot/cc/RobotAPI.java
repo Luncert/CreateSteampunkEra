@@ -40,18 +40,8 @@ public class RobotAPI implements ILuaAPI {
   }
 
   @LuaFunction
-  public final MethodResult isMoving() {
-    return MethodResult.of(access.isMoving());
-  }
-
-  @LuaFunction
   public final MethodResult forward(int distance) {
     return access.executeCommand(new ForwardCommand(distance));
-  }
-
-  @LuaFunction
-  public final MethodResult isRotating() {
-    return MethodResult.of(access.isRotating());
   }
 
   @LuaFunction

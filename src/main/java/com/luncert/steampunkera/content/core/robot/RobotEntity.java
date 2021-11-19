@@ -183,6 +183,26 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
             blockPosition().get(axis) + .5f + posDelta));
     }
 
+    @Override
+    public boolean isRotating() {
+        return yRot != getWaitingYRot();
+    }
+
+    @Override
+    public void rotate(int degree) {
+        float waitingYRot = wrapDegrees(yRot + degree);
+        setWaitingYRot(waitingYRot);
+        if (degree > 0) {
+            if (waitingYRot < yRot) {
+                yRot = -180;
+            }
+        } else {
+            if (waitingYRot > yRot) {
+                yRot = 180;
+            }
+        }
+    }
+
     // entity
 
     @OnlyIn(Dist.CLIENT)

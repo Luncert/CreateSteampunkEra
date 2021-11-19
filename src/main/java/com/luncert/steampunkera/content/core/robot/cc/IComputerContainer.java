@@ -44,4 +44,11 @@ public interface IComputerContainer {
   }
 
   default void forward(int n) {}
+
+  default boolean isRotating() {
+    return false;
+  }
+
+  default void rotate(int degree) {
+  }
 }

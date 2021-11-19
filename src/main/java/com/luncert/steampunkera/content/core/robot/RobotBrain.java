@@ -149,6 +149,16 @@ public class RobotBrain implements IRobotAccess {
     owner.forward(n);
   }
 
+  @Override
+  public boolean isRotating() {
+    return owner.isRotating();
+  }
+
+  @Override
+  public void rotate(int degree) {
+    owner.rotate(degree);
+  }
+
   @Nonnull
   public MethodResult executeCommand(@Nonnull IRobotCommand command) {
     if (getWorld().isClientSide) {

@@ -2,13 +2,11 @@ package com.luncert.steampunkera.content.core.robot.cc;
 
 import com.mojang.authlib.GameProfile;
 import dan200.computercraft.api.lua.MethodResult;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * Proxy of RobotBrain.
@@ -36,6 +34,8 @@ public interface IRobotAccess {
   void forward(int n);
 
   boolean isRotating();
+
+  void rotate(int degree);
 
   // void moveTo(int x, int y, int z);
 }
