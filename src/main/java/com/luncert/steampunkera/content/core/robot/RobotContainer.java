@@ -1,7 +1,7 @@
 package com.luncert.steampunkera.content.core.robot;
 
+import com.luncert.steampunkera.content.core.robot.cc.RobotBrain;
 import com.luncert.steampunkera.index.ModContainerTypes;
-import dan200.computercraft.shared.Registry;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
 import dan200.computercraft.shared.computer.core.IComputer;
 import dan200.computercraft.shared.computer.inventory.ContainerComputerBase;

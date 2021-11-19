@@ -1,6 +1,5 @@
-package com.luncert.steampunkera.content.core.robot;
+package com.luncert.steampunkera.content.core.robot.cc;
 
-import com.luncert.steampunkera.content.core.robot.cc.*;
 import com.mojang.authlib.GameProfile;
 import dan200.computercraft.api.lua.MethodResult;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
@@ -157,6 +156,11 @@ public class RobotBrain implements IRobotAccess {
   @Override
   public void rotate(int degree) {
     owner.rotate(degree);
+  }
+
+  @Override
+  public void setSpeed(int speed) {
+    owner.setSpeed(speed);
   }
 
   @Nonnull

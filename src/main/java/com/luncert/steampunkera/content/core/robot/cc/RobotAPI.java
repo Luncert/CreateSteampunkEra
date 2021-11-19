@@ -58,4 +58,18 @@ public class RobotAPI implements ILuaAPI {
   public final MethodResult turnBack() {
     return access.executeCommand(new RotateCommand(RotateCommand.TargetSide.Back));
   }
+
+  @LuaFunction
+  public final MethodResult setSpeed(int speed) {
+    if (speed <= 0 || speed > 255) {
+      return MethodResult.of(false, "speed out of range (0, 256)");
+    }
+
+    if (!access.isAssembled()) {
+      return MethodResult.of(false, "assemble robot before setSpeed");
+    }
+
+    access.setSpeed(speed);
+    return MethodResult.of(true);
+  }
 }

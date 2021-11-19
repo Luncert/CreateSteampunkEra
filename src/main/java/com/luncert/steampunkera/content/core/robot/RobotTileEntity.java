@@ -1,10 +1,7 @@
 package com.luncert.steampunkera.content.core.robot;
 
 import com.luncert.steampunkera.content.core.base.DirectionalBlock;
-import com.luncert.steampunkera.content.core.robot.cc.ComputerTileBase;
-import com.luncert.steampunkera.content.core.robot.cc.IComputerContainer;
-import com.luncert.steampunkera.content.core.robot.cc.IRobotAccess;
-import com.luncert.steampunkera.content.core.robot.cc.RobotAPI;
+import com.luncert.steampunkera.content.core.robot.cc.*;
 import com.mojang.authlib.GameProfile;
 import dan200.computercraft.ComputerCraft;
 import dan200.computercraft.shared.common.TileGeneric;
@@ -26,12 +23,18 @@ public class RobotTileEntity extends ComputerTileBase implements IComputerContai
     private RobotBrain brain;
 
     public RobotTileEntity(TileEntityType<? extends TileGeneric> type) {
-        super(type, ComputerFamily.NORMAL);
+        super(type, ComputerData.of(ComputerFamily.NORMAL));
         brain = new RobotBrain(this);
     }
 
-    void setRobotBrain(RobotBrain brain) {
-        this.brain = brain;
+    void setComputerData(ComputerData other) {
+        this.data = other;
+        // updateBlock();
+    }
+
+    void setRobotBrain(RobotBrain other) {
+        other.setOwner(this);
+        this.brain = other;
     }
 
     void setOwningPlayer(GameProfile player) {
@@ -55,7 +58,7 @@ public class RobotTileEntity extends ComputerTileBase implements IComputerContai
 
     @Override
     protected ServerComputer createComputer(int instanceID, int computerID) {
-        ServerComputer computer = new ServerComputer(getLevel(), computerID, label, instanceID, getFamily(),
+        ServerComputer computer = new ServerComputer(getLevel(), computerID, data.label, instanceID, getFamily(),
             ComputerCraft.computerTermWidth, ComputerCraft.computerTermHeight);
         computer.setPosition(getBlockPos());
         computer.addAPI(new RobotAPI(computer.getAPIEnvironment(), getAccess()));
@@ -92,8 +95,7 @@ public class RobotTileEntity extends ComputerTileBase implements IComputerContai
     public void assemble(boolean assembleStructure) {
         World world = getLevel();
         BlockPos blockPos = getBlockPos();
-        RobotEntity robotEntity = new RobotEntity(world, blockPos, getBlockState(), brain);
-        brain.setOwner(robotEntity);
+        RobotEntity robotEntity = new RobotEntity(world, blockPos, getBlockState(), brain, data);
         world.addFreshEntity(robotEntity);
         world.removeBlock(blockPos, false);
     }

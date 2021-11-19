@@ -30,26 +30,22 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.Objects;
 import java.util.Optional;
 
+import static com.luncert.steampunkera.content.core.robot.cc.ComputerData.*;
+
 // TODO sync computer data from tile entity
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
 public abstract class ComputerEntityBase extends Entity implements IComputerContainer {
-  private static final String NBT_ID = "ComputerId";
-  private static final String NBT_LABEL = "Label";
-  private static final String NBT_ON = "On";
-  private int instanceID = -1;
-  private int computerID = -1;
-  protected String label = null;
-  private boolean on = false;
-  boolean startOn = false;
-  private boolean fresh = false;
+
+  protected ComputerData data;
+
   private final NonNullConsumer<LazyOptional<IPeripheral>>[] invalidate;
-  private final ComputerFamily family;
 
   @SuppressWarnings("unchecked")
-  public ComputerEntityBase(EntityType<?> entityType, World world, ComputerFamily family) {
+  public ComputerEntityBase(EntityType<?> entityType, World world, ComputerData data) {
     super(entityType, world);
-    this.family = family;
+
+    this.data = data;
 
     this.invalidate = new NonNullConsumer[6];
 
@@ -59,12 +55,12 @@ public abstract class ComputerEntityBase extends Entity implements IComputerCont
   }
 
   protected void unload() {
-    if (this.instanceID >= 0) {
+    if (data.instanceID >= 0) {
       if (!this.level.isClientSide) {
-        ComputerCraft.serverComputerRegistry.remove(this.instanceID);
+        ComputerCraft.serverComputerRegistry.remove(data.instanceID);
       }
 
-      this.instanceID = -1;
+      data.instanceID = -1;
     }
 
   }
@@ -87,7 +83,7 @@ public abstract class ComputerEntityBase extends Entity implements IComputerCont
 
   @Override
   public void scheduleUpdateComputer(boolean startOn) {
-    this.startOn = startOn;
+    data.startOn = startOn;
   }
 
   @Override
@@ -98,18 +94,18 @@ public abstract class ComputerEntityBase extends Entity implements IComputerCont
         return;
       }
 
-      if (this.startOn || this.fresh && this.on) {
+      if (data.startOn || data.fresh && data.on) {
         computer.turnOn();
-        this.startOn = false;
+        data.startOn = false;
       }
 
       computer.keepAlive();
-      this.fresh = false;
-      this.computerID = computer.getID();
-      this.label = computer.getLabel();
-      this.on = computer.isOn();
+      data.fresh = false;
+      data.computerID = computer.getID();
+      data.label = computer.getLabel();
+      data.on = computer.isOn();
       if (computer.hasOutputChanged()) {
-        this.updateOutput();
+        updateOutput();
       }
     }
   }
@@ -189,29 +185,29 @@ public abstract class ComputerEntityBase extends Entity implements IComputerCont
   protected abstract ServerComputer createComputer(int instanceID, int computerID);
 
   public final int getComputerID() {
-    return this.computerID;
+    return data.computerID;
   }
 
   public final String getLabel() {
-    return this.label;
+    return data.label;
   }
 
   public final void setComputerID(int id) {
-    if (!this.level.isClientSide && this.computerID != id) {
-      this.computerID = id;
+    if (!this.level.isClientSide && data.computerID != id) {
+      data.computerID = id;
       getServerComputer().ifPresent(computer -> computer.setID(id));
     }
   }
 
   public final void setLabel(String label) {
-    if (!this.level.isClientSide && !Objects.equals(this.label, label)) {
-      this.label = label;
+    if (!this.level.isClientSide && !Objects.equals(data.label, label)) {
+      data.label = label;
       getServerComputer().ifPresent(computer -> computer.setLabel(label));
     }
   }
 
   public ComputerFamily getFamily() {
-    return family;
+    return data.family;
   }
 
   @Nullable
@@ -220,15 +216,15 @@ public abstract class ComputerEntityBase extends Entity implements IComputerCont
       return null;
     } else {
       boolean changed = false;
-      if (this.instanceID < 0) {
-        this.instanceID = ComputerCraft.serverComputerRegistry.getUnusedInstanceID();
+      if (data.instanceID < 0) {
+        data.instanceID = ComputerCraft.serverComputerRegistry.getUnusedInstanceID();
         changed = true;
       }
 
-      if (!ComputerCraft.serverComputerRegistry.contains(this.instanceID)) {
-        ServerComputer computer = this.createComputer(this.instanceID, this.computerID);
-        ComputerCraft.serverComputerRegistry.add(this.instanceID, computer);
-        this.fresh = true;
+      if (!ComputerCraft.serverComputerRegistry.contains(data.instanceID)) {
+        ServerComputer computer = this.createComputer(data.instanceID, data.computerID);
+        ComputerCraft.serverComputerRegistry.add(data.instanceID, computer);
+        data.fresh = true;
         changed = true;
       }
 
@@ -236,12 +232,13 @@ public abstract class ComputerEntityBase extends Entity implements IComputerCont
         this.updateInput();
       }
 
-      return ComputerCraft.serverComputerRegistry.get(this.instanceID);
+      return ComputerCraft.serverComputerRegistry.get(data.instanceID);
     }
   }
 
   public Optional<ServerComputer> getServerComputer() {
-    return this.level.isClientSide ? Optional.empty() : Optional.ofNullable(ComputerCraft.serverComputerRegistry.get(this.instanceID));
+    return this.level.isClientSide ? Optional.empty()
+        : Optional.ofNullable(ComputerCraft.serverComputerRegistry.get(data.instanceID));
   }
 
   public double getInteractRange(PlayerEntity player) {
@@ -269,22 +266,22 @@ public abstract class ComputerEntityBase extends Entity implements IComputerCont
 
   @Override
   protected void readAdditionalSaveData(CompoundNBT nbt) {
-    this.computerID = nbt.contains(NBT_ID) ? nbt.getInt(NBT_ID) : -1;
-    this.label = nbt.contains(NBT_LABEL) ? nbt.getString(NBT_LABEL) : null;
-    this.on = this.startOn = nbt.getBoolean(NBT_ON);
+    data.computerID = nbt.contains(NBT_ID) ? nbt.getInt(NBT_ID) : -1;
+    data.label = nbt.contains(NBT_LABEL) ? nbt.getString(NBT_LABEL) : null;
+    data.on = data.startOn = nbt.getBoolean(NBT_ON);
   }
 
   @Override
   protected void addAdditionalSaveData(CompoundNBT nbt) {
-    if (this.computerID >= 0) {
-      nbt.putInt(NBT_ID, this.computerID);
+    if (data.computerID >= 0) {
+      nbt.putInt(NBT_ID, data.computerID);
     }
 
-    if (this.label != null) {
-      nbt.putString(NBT_LABEL, this.label);
+    if (data.label != null) {
+      nbt.putString(NBT_LABEL, data.label);
     }
 
-    nbt.putBoolean(NBT_ON, this.on);
+    nbt.putBoolean(NBT_ON, data.on);
   }
 
   @Override

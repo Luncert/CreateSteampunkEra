@@ -51,4 +51,7 @@ public interface IComputerContainer {
 
   default void rotate(int degree) {
   }
+
+  default void setSpeed(int speed) {
+  }
 }

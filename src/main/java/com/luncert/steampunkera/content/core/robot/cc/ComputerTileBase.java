@@ -42,25 +42,19 @@ import javax.annotation.Nullable;
 import java.util.Objects;
 import java.util.Optional;
 
+import static com.luncert.steampunkera.content.core.robot.cc.ComputerData.*;
+
 public abstract class ComputerTileBase extends TileGeneric implements IComputerTile,
     ITickableTileEntity, INameable, IComputerContainer, INamedContainerProvider {
 
-  private static final String NBT_ID = "ComputerId";
-  private static final String NBT_LABEL = "Label";
-  private static final String NBT_ON = "On";
-  private int instanceID = -1;
-  private int computerID = -1;
-  protected String label = null;
-  private boolean on = false;
-  boolean startOn = false;
-  private boolean fresh = false;
   private final NonNullConsumer<LazyOptional<IPeripheral>>[] invalidate;
-  private final ComputerFamily family;
+
+  protected ComputerData data;
 
   @SuppressWarnings("unchecked")
-  public ComputerTileBase(TileEntityType<? extends TileGeneric> type, ComputerFamily family) {
+  public ComputerTileBase(TileEntityType<? extends TileGeneric> type, ComputerData data) {
     super(type);
-    this.family = family;
+    this.data = data;
     NonNullConsumer<LazyOptional<IPeripheral>>[] invalidate = this.invalidate = new NonNullConsumer[6];
     for (Direction direction : Direction.values()) {
       invalidate[direction.ordinal()] = (o) -> this.updateInput(direction);
@@ -68,32 +62,29 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
   }
 
   protected void unload() {
-    if (this.instanceID >= 0) {
-      if (!this.getLevel().isClientSide) {
-        ComputerCraft.serverComputerRegistry.remove(this.instanceID);
+    if (data.instanceID >= 0) {
+      if (!getLevel().isClientSide) {
+        ComputerCraft.serverComputerRegistry.remove(data.instanceID);
       }
-
-      this.instanceID = -1;
     }
-
   }
 
   @Override
   public void destroy() {
-    this.unload();
+    unload();
     for (Direction facing : DirectionUtil.FACINGS) {
-      RedstoneUtil.propagateRedstoneOutput(this.getLevel(), this.getBlockPos(), facing);
+      RedstoneUtil.propagateRedstoneOutput(getLevel(), this.getBlockPos(), facing);
     }
   }
 
   @Override
   public void onChunkUnloaded() {
-    this.unload();
+    unload();
   }
 
   @Override
   public void setRemoved() {
-    this.unload();
+    unload();
     super.setRemoved();
   }
 
@@ -141,7 +132,7 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
 
   @Override
   public void scheduleUpdateComputer(boolean startOn) {
-    this.startOn = startOn;
+    data.startOn = startOn;
   }
 
   @Override
@@ -152,16 +143,16 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
         return;
       }
 
-      if (this.startOn || this.fresh && this.on) {
+      if (data.startOn || data.fresh && data.on) {
         computer.turnOn();
-        this.startOn = false;
+        data.startOn = false;
       }
 
       computer.keepAlive();
-      this.fresh = false;
-      this.computerID = computer.getID();
-      this.label = computer.getLabel();
-      this.on = computer.isOn();
+      data.fresh = false;
+      data.computerID = computer.getID();
+      data.label = computer.getLabel();
+      data.on = computer.isOn();
       this.updateBlockState(computer.getState());
       if (computer.hasOutputChanged()) {
         this.updateOutput();
@@ -174,24 +165,24 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
 
   @Nonnull
   public CompoundNBT save(@Nonnull CompoundNBT nbt) {
-    if (this.computerID >= 0) {
-      nbt.putInt(NBT_ID, this.computerID);
+    if (data.computerID >= 0) {
+      nbt.putInt(NBT_ID, data.computerID);
     }
 
-    if (this.label != null) {
-      nbt.putString(NBT_LABEL, this.label);
+    if (data.label != null) {
+      nbt.putString(NBT_LABEL, data.label);
     }
 
-    nbt.putBoolean(NBT_ON, this.on);
+    nbt.putBoolean(NBT_ON, data.on);
     return super.save(nbt);
   }
 
   @Override
   public void load(@Nonnull BlockState state, @Nonnull CompoundNBT nbt) {
     super.load(state, nbt);
-    this.computerID = nbt.contains(NBT_ID) ? nbt.getInt(NBT_ID) : -1;
-    this.label = nbt.contains(NBT_LABEL) ? nbt.getString(NBT_LABEL) : null;
-    this.on = this.startOn = nbt.getBoolean(NBT_ON);
+    data.computerID = nbt.contains(NBT_ID) ? nbt.getInt(NBT_ID) : -1;
+    data.label = nbt.contains(NBT_LABEL) ? nbt.getString(NBT_LABEL) : null;
+    data.on = data.startOn = nbt.getBoolean(NBT_ON);
   }
 
   protected boolean isPeripheralBlockedOnSide(ComputerSide localSide) {
@@ -272,21 +263,18 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
 
   @Override
   public final int getComputerID() {
-    if (computerID < 0) {
-
-    }
-    return this.computerID;
+    return data.computerID;
   }
 
   @Override
   public final String getLabel() {
-    return this.label;
+    return data.label;
   }
 
   @Override
   public final void setComputerID(int id) {
-    if (!this.getLevel().isClientSide && this.computerID != id) {
-      this.computerID = id;
+    if (!this.getLevel().isClientSide && data.computerID != id) {
+      data.computerID = id;
       getServerComputer().ifPresent(computer -> computer.setID(id));
       this.setChanged();
     }
@@ -294,8 +282,8 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
 
   @Override
   public final void setLabel(String label) {
-    if (!this.getLevel().isClientSide && !Objects.equals(this.label, label)) {
-      this.label = label;
+    if (!this.getLevel().isClientSide && !Objects.equals(data.label, label)) {
+      data.label = label;
       getServerComputer().ifPresent(computer -> computer.setLabel(label));
       this.setChanged();
     }
@@ -303,7 +291,7 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
 
   @Override
   public ComputerFamily getFamily() {
-    return this.family;
+    return data.family;
   }
 
   public ServerComputer createServerComputer() {
@@ -311,15 +299,15 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
       return null;
     } else {
       boolean changed = false;
-      if (this.instanceID < 0) {
-        this.instanceID = ComputerCraft.serverComputerRegistry.getUnusedInstanceID();
+      if (data.instanceID < 0) {
+        data.instanceID = ComputerCraft.serverComputerRegistry.getUnusedInstanceID();
         changed = true;
       }
 
-      if (!ComputerCraft.serverComputerRegistry.contains(this.instanceID)) {
-        ServerComputer computer = this.createComputer(this.instanceID, this.computerID);
-        ComputerCraft.serverComputerRegistry.add(this.instanceID, computer);
-        this.fresh = true;
+      if (!ComputerCraft.serverComputerRegistry.contains(data.instanceID)) {
+        ServerComputer computer = this.createComputer(data.instanceID, data.computerID);
+        ComputerCraft.serverComputerRegistry.add(data.instanceID, computer);
+        data.fresh = true;
         changed = true;
       }
 
@@ -327,59 +315,46 @@ public abstract class ComputerTileBase extends TileGeneric implements IComputerT
         this.updateInput();
       }
 
-      return ComputerCraft.serverComputerRegistry.get(this.instanceID);
+      return ComputerCraft.serverComputerRegistry.get(data.instanceID);
     }
   }
 
   @Override
   public Optional<ServerComputer> getServerComputer() {
     return this.getLevel().isClientSide ? Optional.empty()
-        : Optional.ofNullable(ComputerCraft.serverComputerRegistry.get(this.instanceID));
+        : Optional.ofNullable(ComputerCraft.serverComputerRegistry.get(data.instanceID));
   }
 
   protected void writeDescription(@Nonnull CompoundNBT nbt) {
     super.writeDescription(nbt);
-    if (this.label != null) {
-      nbt.putString(NBT_LABEL, this.label);
+    if (data.label != null) {
+      nbt.putString(NBT_LABEL, data.label);
     }
 
-    if (this.computerID >= 0) {
-      nbt.putInt(NBT_ID, this.computerID);
+    if (data.computerID >= 0) {
+      nbt.putInt(NBT_ID, data.computerID);
     }
   }
 
   protected void readDescription(@Nonnull CompoundNBT nbt) {
     super.readDescription(nbt);
-    this.label = nbt.contains(NBT_LABEL) ? nbt.getString(NBT_LABEL) : null;
-    this.computerID = nbt.contains(NBT_ID) ? nbt.getInt(NBT_ID) : -1;
-  }
-
-  protected void transferStateFrom(ComputerTileBase copy) {
-    if (copy.computerID != this.computerID || copy.instanceID != this.instanceID) {
-      this.unload();
-      this.instanceID = copy.instanceID;
-      this.computerID = copy.computerID;
-      this.label = copy.label;
-      this.on = copy.on;
-      this.startOn = copy.startOn;
-      this.updateBlock();
-    }
-
-    copy.instanceID = -1;
+    data.label = nbt.contains(NBT_LABEL) ? nbt.getString(NBT_LABEL) : null;
+    data.computerID = nbt.contains(NBT_ID) ? nbt.getInt(NBT_ID) : -1;
   }
 
   @Nonnull
   public ITextComponent getName() {
-    return this.hasCustomName() ? new StringTextComponent(this.label) : new TranslationTextComponent(this.getBlockState().getBlock().getDescriptionId());
+    return this.hasCustomName() ? new StringTextComponent(data.label)
+        : new TranslationTextComponent(this.getBlockState().getBlock().getDescriptionId());
   }
 
   public boolean hasCustomName() {
-    return !Strings.isNullOrEmpty(this.label);
+    return !Strings.isNullOrEmpty(data.label);
   }
 
   @Nullable
   public ITextComponent getCustomName() {
-    return this.hasCustomName() ? new StringTextComponent(this.label) : null;
+    return this.hasCustomName() ? new StringTextComponent(data.label) : null;
   }
 
   @Nonnull

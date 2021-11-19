@@ -37,5 +37,7 @@ public interface IRobotAccess {
 
   void rotate(int degree);
 
+  void setSpeed(int speed);
+
   // void moveTo(int x, int y, int z);
 }
