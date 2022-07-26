@@ -2,22 +2,23 @@ package com.luncert.steampunkera;
 
 import com.luncert.steampunkera.content.CCEItemGroup;
 import com.luncert.steampunkera.content.net.CCEPacketHandler;
+import com.luncert.steampunkera.foundation.data.recipe.StandardRecipeGen;
 import com.luncert.steampunkera.index.*;
 import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.simibubi.create.foundation.data.recipe.ProcessingRecipeGen;
 import com.simibubi.create.repack.registrate.util.NonNullLazyValue;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.data.DataGenerator;
 import net.minecraft.item.ItemGroup;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
-import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
+import net.minecraftforge.fml.event.lifecycle.*;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
 public class SteampunkEra {
 
     // Directly reference a log4j logger.
-    private static final Logger LOGGER = LogManager.getLogger();
+    public static final Logger LOGGER = LogManager.getLogger();
 
     public static final ItemGroup MAIN = new CCEItemGroup();
 
@@ -44,19 +45,24 @@ public class SteampunkEra {
         ModContainerTypes.register();
         CCEPacketHandler.register();
 
-        IEventBus buf = FMLJavaModLoadingContext.get().getModEventBus();
-        buf.addListener(SteampunkEra::init);
+        IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+        bus.addListener(SteampunkEra::init);
         // Register the setup method for modloading
-        buf.addListener(this::setup);
+        bus.addListener(this::setup);
         // Register the enqueueIMC method for modloading
-        buf.addListener(this::enqueueIMC);
+        bus.addListener(this::enqueueIMC);
         // Register the processIMC method for modloading
-        buf.addListener(this::processIMC);
+        bus.addListener(this::processIMC);
         // Register the doClientStuff method for modloading
-        buf.addListener(this::doClientStuff);
+        bus.addListener(this::doClientStuff);
+        bus.addListener(EventPriority.LOWEST, SteampunkEra::gatherData);
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+
+        // DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> () ->
+        //     ((IReloadableResourceManager) Minecraft.getInstance().getResourceManager())
+        //         .registerReloadListener(new EntityModelManager()));
     }
 
     public static void init(final FMLCommonSetupEvent event) {
@@ -109,5 +115,11 @@ public class SteampunkEra {
 
     public static CreateRegistrate registrate() {
         return REGISTRATE.get();
+    }
+
+    public static void gatherData(GatherDataEvent event) {
+        DataGenerator gen = event.getGenerator();
+        gen.addProvider(new StandardRecipeGen(gen));
+        ProcessingRecipeGen.registerAll(gen);
     }
 }

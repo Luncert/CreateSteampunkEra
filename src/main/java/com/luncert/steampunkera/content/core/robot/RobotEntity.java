@@ -608,7 +608,7 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
 
     @Override
     protected boolean canRide(Entity entity) {
-        return !(entity instanceof FakePlayer);
+        return entity instanceof OrientedContraptionEntity;
     }
 
     /**
@@ -620,14 +620,17 @@ public class RobotEntity extends ComputerEntityBase implements IEntityAdditional
             double d0 = this.getY() + this.getPassengersRidingOffset() + rider.getMyRidingOffset();
             rider.setPos(this.getX(), d0, this.getZ());
 
+            OrientedContraptionEntity structure = (OrientedContraptionEntity) rider;
+            structure.yaw = (yRot + 180) % 360;
+
             // let rider rotate with robot
             // rider.yRot += this.deltaRotation;
             // rider.setYHeadRot(rider.getYHeadRot() + this.deltaRotation);
             // clampRotation(rider);
 
-            if (rider instanceof ClientPlayerEntity) {
-                setInput(((ClientPlayerEntity) rider).input);
-            }
+            // if (rider instanceof ClientPlayerEntity) {
+            //     setInput(((ClientPlayerEntity) rider).input);
+            // }
 
             // code for more than one passenger, let second passenger rotate 90
             // if (rider instanceof AnimalEntity && this.getPassengers().size() > 1) {
